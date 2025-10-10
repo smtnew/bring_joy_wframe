@@ -29,6 +29,9 @@ const modalChildName = document.getElementById("modalChildName");
 const modalLetterContent = document.getElementById("modalLetterContent");
 const closeModal = document.querySelector(".close");
 
+// Donation modal elements
+let currentDonationChildId = null;
+
 // Initialize app
 async function init() {
   try {
@@ -65,7 +68,7 @@ async function loadChildren() {
 
     const { data, error } = await supabase
       .from("children")
-      .select("*")
+      .select("*, suma_stransa")
       .order("comunitate", { ascending: true })
       .order("nume", { ascending: true });
 
@@ -125,18 +128,34 @@ function renderChildren(children) {
 function renderChildCard(child) {
   const isFinished = child.status === "finished";
   const isReserved = child.status === "reserved";
+  const sumaStransa = child.suma_stransa || 0;
+  const sumaTarget = child.suma;
+  const percentage = Math.min(100, Math.round((sumaStransa / sumaTarget) * 100));
+  const remainingAmount = Math.max(0, sumaTarget - sumaStransa);
 
   let statusBadge = "";
   if (isFinished) {
     statusBadge = '<span class="status-badge finished">✅ Finanțat</span>';
   } else if (isReserved) {
-    statusBadge = '<span class="status-badge">⏳ Rezervat</span>';
+    statusBadge = '<span class="status-badge">⏳ În curs</span>';
   }
 
-  const donateButton =
-    isFinished || isReserved
-      ? `<button class="btn btn-primary" disabled>Donează ${child.suma} RON</button>`
-      : `<button class="btn btn-primary" onclick="donate('${child.id}')">Donează ${child.suma} RON</button>`;
+  // Show progress bar if any amount has been raised
+  let progressBar = "";
+  if (sumaStransa > 0 && !isFinished) {
+    progressBar = `
+      <div class="progress-container">
+        <div class="progress-bar">
+          <div class="progress-fill" style="width: ${percentage}%"></div>
+        </div>
+        <div class="progress-text">${sumaStransa} / ${sumaTarget} RON (${percentage}%)</div>
+      </div>
+    `;
+  }
+
+  const donateButton = isFinished
+    ? `<button class="btn btn-primary" disabled>Finanțat complet</button>`
+    : `<button class="btn btn-primary" onclick="openDonationModal('${child.id}')">Donează${remainingAmount > 0 ? ` (${remainingAmount} RON rămași)` : ''}</button>`;
 
   return `
         <div class="child-card ${
@@ -149,7 +168,8 @@ function renderChildCard(child) {
             <div class="child-info">
                 <h3 class="child-name">${child.nume}</h3>
                 <p class="child-description">${child.text_scurt}</p>
-                <div class="child-amount">${child.suma} RON</div>
+                <div class="child-amount">Necesar: ${child.suma} RON</div>
+                ${progressBar}
                 <div class="child-actions">
                     <button class="btn btn-secondary" onclick="openLetter('${
                       child.id
@@ -178,13 +198,77 @@ function closeLetter() {
   letterModal.classList.remove("active");
 }
 
-// Donate to a child
-async function donate(childId) {
+// Open donation modal
+function openDonationModal(childId) {
   const child = allChildren.find((c) => c.id === childId);
   if (!child) return;
 
-  if (child.status !== "raising") {
-    alert("Acest copil nu mai este disponibil pentru donație.");
+  if (child.status === "finished") {
+    alert("Acest copil a primit deja finanțarea completă.");
+    return;
+  }
+
+  currentDonationChildId = childId;
+  const sumaStransa = child.suma_stransa || 0;
+  const remainingAmount = Math.max(0, child.suma - sumaStransa);
+
+  const donationModal = document.getElementById("donationModal");
+  const donationModalTitle = document.getElementById("donationModalTitle");
+  const donationModalDescription = document.getElementById("donationModalDescription");
+  const donationAmountInput = document.getElementById("donationAmount");
+
+  donationModalTitle.textContent = `Donează pentru ${child.nume}`;
+  
+  if (remainingAmount > 0) {
+    donationModalDescription.innerHTML = `
+      <p>Suma necesară: <strong>${child.suma} RON</strong></p>
+      <p>Suma strânsă: <strong>${sumaStransa} RON</strong></p>
+      <p>Suma rămasă: <strong>${remainingAmount} RON</strong></p>
+      <p class="donation-info">Poți dona orice sumă între 1 RON și ${remainingAmount} RON.</p>
+    `;
+    donationAmountInput.value = remainingAmount;
+    donationAmountInput.max = remainingAmount;
+  } else {
+    donationModalDescription.innerHTML = `
+      <p>Suma necesară: <strong>${child.suma} RON</strong></p>
+      <p>Suma strânsă: <strong>${sumaStransa} RON</strong></p>
+      <p class="donation-info">Poți dona orice sumă începând de la 1 RON.</p>
+    `;
+    donationAmountInput.value = child.suma;
+    donationAmountInput.removeAttribute("max");
+  }
+
+  donationModal.classList.add("active");
+}
+
+// Close donation modal
+function closeDonationModal() {
+  const donationModal = document.getElementById("donationModal");
+  donationModal.classList.remove("active");
+  currentDonationChildId = null;
+}
+
+// Confirm donation
+async function confirmDonation() {
+  if (!currentDonationChildId) return;
+
+  const donationAmountInput = document.getElementById("donationAmount");
+  const amount = parseInt(donationAmountInput.value, 10);
+
+  if (!amount || amount <= 0) {
+    alert("Te rugăm să introduci o sumă validă.");
+    return;
+  }
+
+  const child = allChildren.find((c) => c.id === currentDonationChildId);
+  if (!child) return;
+
+  const sumaStransa = child.suma_stransa || 0;
+  const remainingAmount = Math.max(0, child.suma - sumaStransa);
+
+  // Validate amount doesn't exceed remaining if there's a target
+  if (remainingAmount > 0 && amount > remainingAmount) {
+    alert(`Suma maximă disponibilă pentru donație este ${remainingAmount} RON.`);
     return;
   }
 
@@ -194,6 +278,8 @@ async function donate(childId) {
   }
 
   try {
+    closeDonationModal();
+
     // Call create-payment edge function
     const response = await fetch(
       `${SUPABASE_URL}/functions/v1/create-payment`,
@@ -204,7 +290,8 @@ async function donate(childId) {
           Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
         },
         body: JSON.stringify({
-          child_id: childId,
+          child_id: currentDonationChildId,
+          amount: amount,
         }),
       }
     );
@@ -223,6 +310,11 @@ async function donate(childId) {
       `Eroare: ${error.message}. Verifică că funcțiile Edge sunt configurate corect.`
     );
   }
+}
+
+// Legacy donate function - keeping for backwards compatibility
+async function donate(childId) {
+  openDonationModal(childId);
 }
 
 // Search functionality
@@ -339,6 +431,9 @@ function setupEventListeners() {
 window.openLetter = openLetter;
 window.closeLetter = closeLetter;
 window.donate = donate;
+window.openDonationModal = openDonationModal;
+window.closeDonationModal = closeDonationModal;
+window.confirmDonation = confirmDonation;
 
 // Start the app when DOM is ready
 if (document.readyState === "loading") {
