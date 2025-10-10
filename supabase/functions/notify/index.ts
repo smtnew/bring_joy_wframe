@@ -1,5 +1,13 @@
+// @ts-ignore: Deno resolves remote modules at runtime.
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+// @ts-ignore: Deno resolves remote modules at runtime.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+declare const Deno: {
+  env: {
+    get(key: string): string | undefined;
+  };
+};
 
 const encoder = new TextEncoder();
 
@@ -167,6 +175,7 @@ serve(async (req: Request) => {
     const action = formData.get("action")?.toString();
     const message = formData.get("message")?.toString();
     const approval = formData.get("approval")?.toString();
+    const extraChildId = formData.get("ExtraData[child_id]")?.toString();
     const timestamp = formData.get("timestamp")?.toString();
     const nonce = formData.get("nonce")?.toString();
     const fpHash = formData.get("fp_hash")?.toString();
@@ -174,8 +183,7 @@ serve(async (req: Request) => {
     console.log("IPN received:", {
       invoiceId,
       amount,
-      action,
-      message,
+      extraChildId,
     });
 
     // Validate required fields
@@ -217,58 +225,61 @@ serve(async (req: Request) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Check if payment was approved
-    if (action === "paid" && approval === "APPR") {
-      // Find the child by payment_id
-      const { data: child, error: findError } = await supabase
-        .from("children")
-        .select("*")
-        .eq("payment_id", invoiceId)
-        .single();
-
-      if (findError || !child) {
-        console.error("Child not found for payment:", invoiceId);
-        return new Response("Child not found", { status: 404 });
-      }
-
-      // Update child status to finished
-      const { error: updateError } = await supabase
-        .from("children")
-        .update({
-          status: "finished",
-          paid_at: new Date().toISOString(),
-        })
-        .eq("id", child.id);
-
-      if (updateError) {
-        console.error("Error updating child status:", updateError);
-        return new Response("Error updating status", { status: 500 });
-      }
-
-      console.log("Payment successful, child marked as finished:", child.id);
-      return new Response("OK", { status: 200 });
-    } else {
-      // Payment failed or was cancelled - restore child to raising status
-      const { data: child } = await supabase
-        .from("children")
-        .select("*")
-        .eq("payment_id", invoiceId)
-        .single();
-
-      if (child) {
-        await supabase
-          .from("children")
-          .update({
-            status: "raising",
-            payment_id: null,
-          })
-          .eq("id", child.id);
-
-        console.log("Payment failed, child restored to raising:", child.id);
-      }
-
-      return new Response("Payment not approved", { status: 200 });
+    if (!extraChildId) {
+      console.error("Missing child reference in ExtraData");
+      return new Response("Child reference missing", { status: 400 });
     }
+
+    const { data: child, error: findError } = await supabase
+      .from("children")
+      .select("id")
+      .eq("id", extraChildId)
+      .single();
+
+    if (findError || !child) {
+      console.error("Child not found for payment:", {
+        invoiceId,
+        extraChildId,
+        error: findError,
+      });
+      return new Response("Child not found", { status: 404 });
+    }
+
+    let paidAtIso: string;
+    if (timestamp && timestamp.length === 14) {
+      const year = Number(timestamp.slice(0, 4));
+      const month = Number(timestamp.slice(4, 6)) - 1;
+      const day = Number(timestamp.slice(6, 8));
+      const hour = Number(timestamp.slice(8, 10));
+      const minute = Number(timestamp.slice(10, 12));
+      const second = Number(timestamp.slice(12, 14));
+      const parsed = new Date(Date.UTC(year, month, day, hour, minute, second));
+      paidAtIso = parsed.toISOString();
+    } else {
+      paidAtIso = new Date().toISOString();
+    }
+
+    const { error: updateError } = await supabase
+      .from("children")
+      .update({
+        status: "finished",
+        paid_at: paidAtIso,
+        payment_id: invoiceId ?? null,
+      })
+      .eq("id", child.id);
+
+    if (updateError) {
+      console.error("Error updating child status:", updateError);
+      return new Response("Error updating status", { status: 500 });
+    }
+
+    console.log("Payment recorded:", {
+      childId: child.id,
+      amount,
+      timestamp,
+    });
+
+    return new Response("OK", { status: 200 });
   } catch (error) {
     console.error("Error in notify:", error);
     return new Response("Internal server error", { status: 500 });

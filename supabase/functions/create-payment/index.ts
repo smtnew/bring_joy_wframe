@@ -1,5 +1,13 @@
+// @ts-ignore: Deno provides remote module resolution at runtime.
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+// @ts-ignore: Deno provides remote module resolution at runtime.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+declare const Deno: {
+  env: {
+    get(key: string): string | undefined;
+  };
+};
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -116,6 +124,18 @@ function md5Bytes(message: Uint8Array): Uint8Array {
 
 function md5HexFromBytes(message: Uint8Array): string {
   return bytesToHex(md5Bytes(message));
+}
+
+function formatTimestamp(date: Date): string {
+  const pad = (value: number): string => value.toString().padStart(2, "0");
+  return (
+    date.getUTCFullYear().toString() +
+    pad(date.getUTCMonth() + 1) +
+    pad(date.getUTCDate()) +
+    pad(date.getUTCHours()) +
+    pad(date.getUTCMinutes()) +
+    pad(date.getUTCSeconds())
+  );
 }
 
 function euplatescMac(data: (string | null)[], hexKey: string): string {
@@ -241,8 +261,13 @@ serve(async (req: Request) => {
     const currency = "RON";
     const orderDescription = `Donație pentru ${child.nume}`;
     const orderNumber = paymentId;
-    const timestamp = Math.floor(Date.now() / 1000).toString();
-    const nonce = Math.random().toString(36).substr(2, 9);
+    const timestamp = formatTimestamp(new Date());
+    const nonce = md5HexFromBytes(
+      encoder.encode(`${timestamp}-${Math.random()}`)
+    );
+    const successUrl = Deno.env.get("EUPLATESC_SUCCESS_URL") || null;
+    const cancelUrl = Deno.env.get("EUPLATESC_CANCEL_URL") || null;
+    const confirmUrl = Deno.env.get("EUPLATESC_CONFIRM_URL") || null;
 
     // Calculate HMAC signature (MAC) using EuPlătesc algorithm
     // Order matters! Check EuPlătesc documentation for exact parameter order
@@ -270,6 +295,9 @@ serve(async (req: Request) => {
     euplatescUrl.searchParams.append("timestamp", timestamp);
     euplatescUrl.searchParams.append("nonce", nonce);
     euplatescUrl.searchParams.append("fp_hash", fp_hash);
+    if (successUrl) {
+      euplatescUrl.searchParams.append("ExtraData[silenturl]", successUrl);
+    }
     euplatescUrl.searchParams.append("ExtraData[child_id]", child_id);
     if (donor) {
       euplatescUrl.searchParams.append("ExtraData[donor]", donor);
