@@ -127,17 +127,17 @@ function renderChildren(children) {
 // Render individual child card
 function renderChildCard(child) {
   const isFinished = child.status === "finished";
-  const isReserved = child.status === "reserved";
   const sumaStransa = child.suma_stransa || 0;
   const sumaTarget = child.suma;
-  const percentage = Math.min(100, Math.round((sumaStransa / sumaTarget) * 100));
+  const percentage = Math.min(
+    100,
+    Math.round((sumaStransa / sumaTarget) * 100)
+  );
   const remainingAmount = Math.max(0, sumaTarget - sumaStransa);
 
   let statusBadge = "";
   if (isFinished) {
     statusBadge = '<span class="status-badge finished">✅ Finanțat</span>';
-  } else if (isReserved) {
-    statusBadge = '<span class="status-badge">⏳ În curs</span>';
   }
 
   // Show progress bar if any amount has been raised
@@ -155,7 +155,11 @@ function renderChildCard(child) {
 
   const donateButton = isFinished
     ? `<button class="btn btn-primary" disabled>Finanțat complet</button>`
-    : `<button class="btn btn-primary" onclick="openDonationModal('${child.id}')">Donează${remainingAmount > 0 ? ` (${remainingAmount} RON rămași)` : ''}</button>`;
+    : `<button class="btn btn-primary" onclick="openDonationModal('${
+        child.id
+      }')">Donează${
+        remainingAmount > 0 ? ` (${remainingAmount} RON rămași)` : ""
+      }</button>`;
 
   return `
         <div class="child-card ${
@@ -214,11 +218,13 @@ function openDonationModal(childId) {
 
   const donationModal = document.getElementById("donationModal");
   const donationModalTitle = document.getElementById("donationModalTitle");
-  const donationModalDescription = document.getElementById("donationModalDescription");
+  const donationModalDescription = document.getElementById(
+    "donationModalDescription"
+  );
   const donationAmountInput = document.getElementById("donationAmount");
 
   donationModalTitle.textContent = `Donează pentru ${child.nume}`;
-  
+
   if (remainingAmount > 0) {
     donationModalDescription.innerHTML = `
       <p>Suma necesară: <strong>${child.suma} RON</strong></p>
@@ -255,12 +261,14 @@ async function confirmDonation() {
   const donationAmountInput = document.getElementById("donationAmount");
   const amount = parseInt(donationAmountInput.value, 10);
 
+  const childId = currentDonationChildId;
+
   if (!amount || amount <= 0) {
     alert("Te rugăm să introduci o sumă validă.");
     return;
   }
 
-  const child = allChildren.find((c) => c.id === currentDonationChildId);
+  const child = allChildren.find((c) => c.id === childId);
   if (!child) return;
 
   const sumaStransa = child.suma_stransa || 0;
@@ -268,7 +276,9 @@ async function confirmDonation() {
 
   // Validate amount doesn't exceed remaining if there's a target
   if (remainingAmount > 0 && amount > remainingAmount) {
-    alert(`Suma maximă disponibilă pentru donație este ${remainingAmount} RON.`);
+    alert(
+      `Suma maximă disponibilă pentru donație este ${remainingAmount} RON.`
+    );
     return;
   }
 
@@ -290,7 +300,7 @@ async function confirmDonation() {
           Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
         },
         body: JSON.stringify({
-          child_id: currentDonationChildId,
+          child_id: childId,
           amount: amount,
         }),
       }
@@ -302,8 +312,8 @@ async function confirmDonation() {
       throw new Error(data.error || "Eroare la procesarea donației");
     }
 
-    // Redirect to payment page
-    window.location.href = data.redirect;
+    // Redirect to payment page in a new tab to keep the campaign open
+    window.open(data.redirect, "_blank", "noopener,noreferrer");
   } catch (error) {
     console.error("Error creating payment:", error);
     alert(

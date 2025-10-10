@@ -198,7 +198,10 @@ serve(async (req: Request) => {
     }
 
     // Validate custom amount if provided
-    if (customAmount !== undefined && (typeof customAmount !== 'number' || customAmount <= 0)) {
+    if (
+      customAmount !== undefined &&
+      (typeof customAmount !== "number" || customAmount <= 0)
+    ) {
       return new Response(JSON.stringify({ error: "Invalid amount" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -224,19 +227,8 @@ serve(async (req: Request) => {
       });
     }
 
-    // Check if child is available - allow partial donations for raising children
-    if (child.status === "finished") {
-      return new Response(
-        JSON.stringify({ error: "Child has already received full donation" }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
-    
-    // Allow donations to "raising" or "reserved" status (for partial payments)
-    if (child.status !== "raising" && child.status !== "reserved") {
+    // Block donations for children no longer raising funds
+    if (child.status !== "raising") {
       return new Response(
         JSON.stringify({ error: "Child is not available for donation" }),
         {
@@ -252,30 +244,31 @@ serve(async (req: Request) => {
       .substr(2, 9)}`;
 
     // Determine the amount to charge - use custom amount if provided, otherwise use full child amount
-    const paymentAmount = customAmount !== undefined ? customAmount : child.suma;
+    const paymentAmount =
+      customAmount !== undefined ? customAmount : child.suma;
 
-    // Only reserve the child if this is the first payment (status is "raising")
-    // For subsequent partial payments, we don't change the status
-    if (child.status === "raising") {
-      const { error: updateError } = await supabase
-        .from("children")
-        .update({
-          status: "reserved",
-          payment_id: paymentId,
-        })
-        .eq("id", child_id)
-        .eq("status", "raising"); // Only update if still raising (race condition protection)
+    const raisedSoFar = Number(child.suma_stransa || 0);
+    const targetAmount = Number(child.suma);
+    const remainingAmount = Math.max(targetAmount - raisedSoFar, 0);
 
-      if (updateError) {
-        console.error("Error updating child:", updateError);
-        return new Response(
-          JSON.stringify({ error: "Failed to reserve child" }),
-          {
-            status: 500,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          }
-        );
-      }
+    if (remainingAmount <= 0) {
+      return new Response(
+        JSON.stringify({ error: "Child has already received full donation" }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    if (paymentAmount > remainingAmount) {
+      return new Response(
+        JSON.stringify({ error: "Donation exceeds remaining amount" }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
     }
 
     // Prepare EuPlătesc payment data
@@ -324,7 +317,10 @@ serve(async (req: Request) => {
       euplatescUrl.searchParams.append("ExtraData[silenturl]", successUrl);
     }
     euplatescUrl.searchParams.append("ExtraData[child_id]", child_id);
-    euplatescUrl.searchParams.append("ExtraData[amount]", paymentAmount.toString());
+    euplatescUrl.searchParams.append(
+      "ExtraData[amount]",
+      paymentAmount.toString()
+    );
     if (donor) {
       euplatescUrl.searchParams.append("ExtraData[donor]", donor);
     }
