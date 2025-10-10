@@ -1,10 +1,21 @@
-// Configuration - Replace with your actual Supabase credentials
-const SUPABASE_URL = "https://pxtexjabvntdcbykvxbp.supabase.co";
-const SUPABASE_ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4dGV4amFidm50ZGNieWt2eGJwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAwODU3NjcsImV4cCI6MjA3NTY2MTc2N30.CkZ-mhcDdxRCwyFWwDAc6-MsA2rs3rdPZbl1qshjZGU";
+let SUPABASE_URL = "";
+let SUPABASE_ANON_KEY = "";
+let supabase;
 
-// Initialize Supabase client
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+async function loadConfig() {
+  if (window.__bringJoyConfig) {
+    return window.__bringJoyConfig;
+  }
+
+  const response = await fetch("config.json", { cache: "no-store" });
+  if (!response.ok) {
+    throw new Error("Nu s-a putut încărca fișierul config.json");
+  }
+
+  const data = await response.json();
+  window.__bringJoyConfig = data;
+  return data;
+}
 
 // State
 let allChildren = [];
@@ -20,6 +31,26 @@ const closeModal = document.querySelector(".close");
 
 // Initialize app
 async function init() {
+  try {
+    const config = await loadConfig();
+    SUPABASE_URL = config.supabase?.url || "";
+    SUPABASE_ANON_KEY = config.supabase?.anonKey || "";
+
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+      throw new Error("Configurația Supabase lipsește din config.json");
+    }
+
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  } catch (error) {
+    console.error("Error loading config:", error);
+    childrenContainer.innerHTML = `
+            <div class="loading">
+                ❌ Configurația aplicației nu a putut fi încărcată. Verifică fișierul config.json.
+            </div>
+        `;
+    return;
+  }
+
   await loadChildren();
   setupRealtimeSubscription();
   setupEventListeners();
@@ -28,6 +59,10 @@ async function init() {
 // Load children from Supabase
 async function loadChildren() {
   try {
+    if (!supabase) {
+      throw new Error("Clientul Supabase nu este inițializat");
+    }
+
     const { data, error } = await supabase
       .from("children")
       .select("*")
@@ -153,6 +188,11 @@ async function donate(childId) {
     return;
   }
 
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    alert("Configurația Supabase nu este disponibilă.");
+    return;
+  }
+
   try {
     // Call create-payment edge function
     const response = await fetch(
@@ -207,6 +247,10 @@ function searchChildren(query) {
 
 // Setup Realtime subscription
 function setupRealtimeSubscription() {
+  if (!supabase) {
+    return;
+  }
+
   const channel = supabase
     .channel("children-changes")
     .on(
