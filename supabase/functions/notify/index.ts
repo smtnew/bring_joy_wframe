@@ -176,6 +176,7 @@ serve(async (req: Request) => {
     const message = formData.get("message")?.toString();
     const approval = formData.get("approval")?.toString();
     const extraChildId = formData.get("ExtraData[child_id]")?.toString();
+    const extraAmount = formData.get("ExtraData[amount]")?.toString();
     const timestamp = formData.get("timestamp")?.toString();
     const nonce = formData.get("nonce")?.toString();
     const fpHash = formData.get("fp_hash")?.toString();
@@ -232,7 +233,7 @@ serve(async (req: Request) => {
 
     const { data: child, error: findError } = await supabase
       .from("children")
-      .select("id")
+      .select("id, suma, suma_stransa")
       .eq("id", extraChildId)
       .single();
 
@@ -245,38 +246,75 @@ serve(async (req: Request) => {
       return new Response("Child not found", { status: 404 });
     }
 
-    let paidAtIso: string;
-    if (timestamp && timestamp.length === 14) {
-      const year = Number(timestamp.slice(0, 4));
-      const month = Number(timestamp.slice(4, 6)) - 1;
-      const day = Number(timestamp.slice(6, 8));
-      const hour = Number(timestamp.slice(8, 10));
-      const minute = Number(timestamp.slice(10, 12));
-      const second = Number(timestamp.slice(12, 14));
-      const parsed = new Date(Date.UTC(year, month, day, hour, minute, second));
-      paidAtIso = parsed.toISOString();
-    } else {
-      paidAtIso = new Date().toISOString();
+    // Parse the payment amount - use extraAmount if available, otherwise use amount from EuPlătesc
+    const paymentAmountRon = extraAmount 
+      ? parseInt(extraAmount, 10) 
+      : Math.round(parseFloat(amount || "0"));
+
+    // Insert payment record
+    const { error: insertError } = await supabase
+      .from("payments")
+      .insert({
+        child_id: child.id,
+        amount: paymentAmountRon,
+        payment_ref: invoiceId ?? null,
+      });
+
+    if (insertError) {
+      console.error("Error inserting payment:", insertError);
+      return new Response("Error recording payment", { status: 500 });
     }
 
-    const { error: updateError } = await supabase
+    // The trigger will automatically update suma_stransa
+    // Now check if the child has reached the target amount
+    const { data: updatedChild, error: fetchError } = await supabase
       .from("children")
-      .update({
-        status: "finished",
-        paid_at: paidAtIso,
-        payment_id: invoiceId ?? null,
-      })
-      .eq("id", child.id);
+      .select("suma, suma_stransa")
+      .eq("id", child.id)
+      .single();
 
-    if (updateError) {
-      console.error("Error updating child status:", updateError);
-      return new Response("Error updating status", { status: 500 });
+    if (fetchError) {
+      console.error("Error fetching updated child:", fetchError);
+      return new Response("Error checking child status", { status: 500 });
+    }
+
+    // If the child has reached or exceeded the target amount, mark as finished
+    if (updatedChild.suma_stransa >= updatedChild.suma) {
+      let paidAtIso: string;
+      if (timestamp && timestamp.length === 14) {
+        const year = Number(timestamp.slice(0, 4));
+        const month = Number(timestamp.slice(4, 6)) - 1;
+        const day = Number(timestamp.slice(6, 8));
+        const hour = Number(timestamp.slice(8, 10));
+        const minute = Number(timestamp.slice(10, 12));
+        const second = Number(timestamp.slice(12, 14));
+        const parsed = new Date(Date.UTC(year, month, day, hour, minute, second));
+        paidAtIso = parsed.toISOString();
+      } else {
+        paidAtIso = new Date().toISOString();
+      }
+
+      const { error: updateError } = await supabase
+        .from("children")
+        .update({
+          status: "finished",
+          paid_at: paidAtIso,
+          payment_id: invoiceId ?? null,
+        })
+        .eq("id", child.id);
+
+      if (updateError) {
+        console.error("Error updating child status:", updateError);
+        return new Response("Error updating status", { status: 500 });
+      }
     }
 
     console.log("Payment recorded:", {
       childId: child.id,
-      amount,
+      amount: paymentAmountRon,
       timestamp,
+      totalRaised: updatedChild.suma_stransa,
+      target: updatedChild.suma,
     });
 
     return new Response("OK", { status: 200 });

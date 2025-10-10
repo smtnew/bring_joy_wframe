@@ -45,7 +45,9 @@ Aplicația este complet **serverless**, bazată pe **Supabase** (PostgreSQL + Re
 
 ---
 
-## 🗄️ Structura bazei de date (`children`)
+## 🗄️ Structura bazei de date
+
+### Tabel `children`
 
 | Coloana        | Tip     | Descriere                           |
 | -------------- | ------- | ----------------------------------- |
@@ -54,9 +56,25 @@ Aplicația este complet **serverless**, bazată pe **Supabase** (PostgreSQL + Re
 | text_scurt     | text    | descriere scurtă                    |
 | text_scrisoare | text    | scrisoarea completă (HTML/Markdown) |
 | poza_url       | text    | link către poză                     |
-| suma           | integer | valoarea cadoului (RON)             |
+| suma           | integer | valoarea cadoului necesar (RON)     |
+| suma_stransa   | integer | suma totală strânsă până acum (RON) |
 | comunitate     | text    | comunitatea copilului               |
-| status         | text    | `raising` sau `finished`            |
+| status         | text    | `raising`, `reserved` sau `finished`|
+| payment_id     | text    | ID-ul tranzacției de plată          |
+| paid_at        | timestamp | data finalizării                  |
+| created_at     | timestamp | data creării                      |
+
+### Tabel `payments`
+
+| Coloana     | Tip       | Descriere                              |
+| ----------- | --------- | -------------------------------------- |
+| id          | uuid      | identificator unic                     |
+| child_id    | uuid      | referință către copilul din `children` |
+| amount      | integer   | suma donată (RON)                      |
+| payment_ref | text      | referință tranzacție EuPlătesc         |
+| created_at  | timestamp | data donației                          |
+
+**Notă:** Un trigger PostgreSQL actualizează automat `children.suma_stransa` la fiecare inserare, modificare sau ștergere din `payments`.
 
 ---
 
@@ -64,15 +82,25 @@ Aplicația este complet **serverless**, bazată pe **Supabase** (PostgreSQL + Re
 
 1. La accesarea site-ului, aplicația încarcă lista copiilor din Supabase și îi grupează automat după comunitate.
 2. Utilizatorul poate căuta un copil după nume sau descriere.
-3. Apăsarea butonului **„Donează”**:
-   - trimite cerere către Edge Function `/create-payment`;
-   - rezervă copilul în baza de date;
+3. Apăsarea butonului **„Donează"**:
+   - se deschide un modal care permite alegerea sumei de donat;
+   - utilizatorul poate dona suma completă sau o sumă parțială;
+   - trimite cerere către Edge Function `/create-payment` cu suma aleasă;
    - redirecționează spre EuPlătesc pentru plată.
 4. După confirmarea plății:
-   - EuPlătesc trimite notificare (IPN) către `/notify`;
-   - statusul copilului se schimbă în `finished`;
-   - frontendul actualizează în timp real cardul respectiv.
+   - se inserează o înregistrare în tabela `payments`;
+   - trigger-ul actualizează automat `suma_stransa` din `children`;
+   - dacă suma strânsă atinge sau depășește ținta, statusul devine `finished`;
+   - frontendul actualizează în timp real progresul și statusul cardului.
 
+
+### 💡 Donații parțiale
+
+Platforma permite **donații parțiale**, ceea ce înseamnă că:
+- Mai mulți donatori pot contribui la cadoul unui copil.
+- Progresul este afișat printr-o bară de progres pe fiecare card.
+- Copilul rămâne disponibil pentru donații până când suma totală este strânsă.
+- Fiecare donație este înregistrată separat în tabela `payments`.
 ---
 
 ## 🧩 Cum rulezi local

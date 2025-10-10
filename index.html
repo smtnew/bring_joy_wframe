@@ -72,6 +72,25 @@
         </div>
     </div>
 
+    <!-- Donation Modal -->
+    <div id="donationModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeDonationModal()">&times;</span>
+            <h2 id="donationModalTitle"></h2>
+            <div class="donation-modal-body">
+                <p id="donationModalDescription"></p>
+                <div class="donation-amount-section">
+                    <label for="donationAmount">Suma donației (RON):</label>
+                    <input type="number" id="donationAmount" min="1" step="1" />
+                </div>
+                <div class="donation-buttons">
+                    <button class="btn btn-secondary" onclick="closeDonationModal()">Anulează</button>
+                    <button class="btn btn-primary" onclick="confirmDonation()">Continuă la plată</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="app.js"></script>
 </body>
