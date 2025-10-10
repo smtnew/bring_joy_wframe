@@ -144,6 +144,8 @@ nav a:hover {
   border-radius: 16px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
   border: 1px solid rgba(0, 0, 0, 0.05);
+  position: relative;
+  padding-right: 3rem;
 }
 
 .search-panel[data-open="false"] {
@@ -199,6 +201,32 @@ nav a:hover {
   margin-top: 0.75rem;
   font-size: 0.85rem;
   color: var(--color-gray);
+}
+
+.search-close {
+  position: absolute;
+  top: 0.65rem;
+  right: 0.75rem;
+  border: none;
+  background: none;
+  color: var(--color-gray);
+  font-size: 1.1rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0.25rem;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.search-close:hover {
+  color: var(--color-red);
+  transform: scale(1.1);
+}
+
+.search-close:focus-visible {
+  color: var(--color-red);
+  transform: scale(1.1);
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
 }
 
 @media (max-width: 768px) {
@@ -274,7 +302,6 @@ nav a:hover {
 .child-card.finished {
   opacity: 0.7;
 }
-
 
 .child-image {
   width: 100%;

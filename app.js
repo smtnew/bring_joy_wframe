@@ -25,6 +25,7 @@ let childrenByStatus = {};
 const searchInput = document.getElementById("searchInput");
 const searchToggle = document.getElementById("searchToggle");
 const searchPanel = document.getElementById("searchPanel");
+const searchClose = document.getElementById("searchClose");
 const childrenContainer = document.getElementById("childrenContainer");
 const letterModal = document.getElementById("letterModal");
 const modalChildName = document.getElementById("modalChildName");
@@ -444,6 +445,15 @@ function setupEventListeners() {
         openSearchPanel();
       }
     });
+
+    if (searchClose) {
+      searchClose.addEventListener("click", () => {
+        closeSearchPanel();
+        if (searchToggle) {
+          searchToggle.focus();
+        }
+      });
+    }
 
     document.addEventListener("click", (event) => {
       if (
