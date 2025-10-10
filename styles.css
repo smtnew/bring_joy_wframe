@@ -77,8 +77,18 @@ nav a:hover {
     var(--color-white) 0%,
     var(--color-beige) 100%
   );
-  padding: 2rem 0 1.5rem;
-  text-align: center;
+  padding: 1.5rem 0 1rem;
+}
+
+.hero-layout {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.hero-copy {
+  max-width: 720px;
 }
 
 .hero-title {
@@ -90,30 +100,75 @@ nav a:hover {
 }
 
 .hero-subtitle {
-  font-size: 1rem;
+  font-size: 0.95rem;
   color: var(--color-gold);
   font-weight: 600;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
 }
 
 .hero-description {
-  font-size: 0.95rem;
+  font-size: 0.93rem;
   color: var(--color-gray);
-  max-width: 600px;
-  margin: 0 auto;
-  line-height: 1.5;
+  line-height: 1.4;
+  max-width: 100%;
 }
 
-/* Search Section */
-.search-section {
-  padding: 2rem 0;
-  background-color: var(--color-white);
+.hero-actions {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+}
+
+.search-toggle {
+  background: var(--color-white);
+  border: 2px solid var(--color-gold);
+  color: var(--color-red);
+  font-weight: 600;
+  padding: 0.6rem 1rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  font-family: var(--font-body);
+}
+
+.search-toggle:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.search-panel {
+  max-width: 480px;
+  margin: 1rem auto 0;
+  padding: 1rem 1.5rem;
+  background: var(--color-white);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.search-panel[data-open="false"] {
+  display: none;
+}
+
+.search-panel.open {
+  animation: fadeSlideDown 0.25s ease;
+}
+
+@keyframes fadeSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .search-box {
   position: relative;
-  max-width: 600px;
-  margin: 0 auto;
+  max-width: none;
+  margin: 0;
 }
 
 .search-box input {
@@ -140,6 +195,40 @@ nav a:hover {
   pointer-events: none;
 }
 
+.search-helper {
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--color-gray);
+}
+
+@media (max-width: 768px) {
+  .hero {
+    padding: 1.25rem 0 0.75rem;
+  }
+
+  .hero-layout {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .hero-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .search-toggle {
+    width: 100%;
+    text-align: left;
+  }
+
+  .search-panel {
+    max-width: none;
+    margin: 0.75rem 1.25rem 0;
+    align-self: stretch;
+  }
+}
+
 /* Communities Section */
 .communities-section {
   padding: 3rem 0;
@@ -161,18 +250,20 @@ nav a:hover {
 
 .children-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 2rem;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1.5rem;
 }
 
 /* Child Card */
 .child-card {
   background: var(--color-white);
-  border-radius: 12px;
+  border-radius: 10px;
   overflow: hidden;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
 .child-card:hover {
@@ -184,51 +275,59 @@ nav a:hover {
   opacity: 0.7;
 }
 
+
 .child-image {
   width: 100%;
-  height: 250px;
+  height: 165px;
   object-fit: cover;
 }
 
 .child-info {
-  padding: 1.5rem;
+  padding: 1rem 1.1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  flex: 1;
 }
 
 .child-name {
   font-family: var(--font-heading);
-  font-size: 1.5rem;
+  font-size: 1.3rem;
   color: var(--color-red);
-  margin-bottom: 0.5rem;
   letter-spacing: 0.5px;
 }
 
 .child-description {
   color: var(--color-gray);
-  margin-bottom: 1rem;
-  font-size: 0.95rem;
-  line-height: 1.6;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  display: -webkit-box;
+  line-clamp: 3;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .child-amount {
-  font-size: 1.2rem;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--color-gold);
-  margin-bottom: 1rem;
 }
 
 .child-actions {
   display: flex;
   gap: 0.5rem;
+  margin-top: auto;
 }
 
 .btn {
   flex: 1;
-  padding: 0.75rem 1rem;
+  padding: 0.65rem 0.85rem;
   border: none;
   border-radius: 8px;
   font-family: var(--font-body);
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   cursor: pointer;
   transition: all 0.3s ease;
   text-align: center;

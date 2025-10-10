@@ -23,6 +23,8 @@ let childrenByStatus = {};
 
 // DOM Elements
 const searchInput = document.getElementById("searchInput");
+const searchToggle = document.getElementById("searchToggle");
+const searchPanel = document.getElementById("searchPanel");
 const childrenContainer = document.getElementById("childrenContainer");
 const letterModal = document.getElementById("letterModal");
 const modalChildName = document.getElementById("modalChildName");
@@ -31,6 +33,30 @@ const closeModal = document.querySelector(".close");
 
 // Donation modal elements
 let currentDonationChildId = null;
+
+function openSearchPanel() {
+  if (!searchPanel) return;
+  searchPanel.dataset.open = "true";
+  searchPanel.classList.add("open");
+  searchPanel.removeAttribute("hidden");
+  if (searchToggle) {
+    searchToggle.setAttribute("aria-expanded", "true");
+  }
+  if (searchInput) {
+    searchInput.focus({ preventScroll: true });
+    searchInput.select();
+  }
+}
+
+function closeSearchPanel() {
+  if (!searchPanel) return;
+  searchPanel.dataset.open = "false";
+  searchPanel.classList.remove("open");
+  searchPanel.setAttribute("hidden", "");
+  if (searchToggle) {
+    searchToggle.setAttribute("aria-expanded", "false");
+  }
+}
 
 // Initialize app
 async function init() {
@@ -140,13 +166,14 @@ function renderChildCard(child) {
     statusBadge = '<span class="status-badge finished">✅ Finanțat</span>';
   }
 
-  // Show progress bar if any amount has been raised
+  // Show progress bar even at 0% so donors see the fundraising target
   let progressBar = "";
-  if (sumaStransa > 0 && !isFinished) {
+  if (!isFinished) {
+    const progressWidth = percentage > 0 ? `${percentage}%` : "4px";
     progressBar = `
       <div class="progress-container">
         <div class="progress-bar">
-          <div class="progress-fill" style="width: ${percentage}%"></div>
+          <div class="progress-fill" style="width: ${progressWidth}"></div>
         </div>
         <div class="progress-text">${sumaStransa} / ${sumaTarget} RON (${percentage}%)</div>
       </div>
@@ -408,6 +435,27 @@ function updateChildCard(child) {
 
 // Setup event listeners
 function setupEventListeners() {
+  if (searchToggle && searchPanel) {
+    searchToggle.addEventListener("click", () => {
+      const isOpen = searchPanel.dataset.open === "true";
+      if (isOpen) {
+        closeSearchPanel();
+      } else {
+        openSearchPanel();
+      }
+    });
+
+    document.addEventListener("click", (event) => {
+      if (
+        searchPanel.dataset.open === "true" &&
+        !searchPanel.contains(event.target) &&
+        !searchToggle.contains(event.target)
+      ) {
+        closeSearchPanel();
+      }
+    });
+  }
+
   // Search input
   if (searchInput) {
     searchInput.addEventListener("input", (e) => {
@@ -431,8 +479,22 @@ function setupEventListeners() {
 
   // Close modal with Escape key
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && letterModal.classList.contains("active")) {
-      closeLetter();
+    if (e.key === "Escape") {
+      let handled = false;
+
+      if (letterModal && letterModal.classList.contains("active")) {
+        closeLetter();
+        handled = true;
+      }
+
+      if (searchPanel && searchPanel.dataset.open === "true") {
+        closeSearchPanel();
+        handled = true;
+      }
+
+      if (handled) {
+        e.preventDefault();
+      }
     }
   });
 }
