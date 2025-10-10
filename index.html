@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bring Joy — Ediția a XII-a</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <h1 class="logo">🎁 Bring Joy</h1>
+                <nav>
+                    <a href="#communities">Comunități</a>
+                    <a href="about.html">Despre campanie</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="container">
+                <h2 class="hero-title">Bring Joy — Ediția a XII-a</h2>
+                <p class="hero-subtitle">8 octombrie – 25 decembrie 2025</p>
+                <p class="hero-description">
+                    Alătură-te campaniei și ajută un copil să primească un cadou de Crăciun.
+                    Fiecare donație transformă visul unui copil în realitate.
+                </p>
+            </div>
+        </section>
+
+        <section class="search-section">
+            <div class="container">
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="Caută după nume sau descriere..." />
+                    <span class="search-icon">🔍</span>
+                </div>
+            </div>
+        </section>
+
+        <section id="communities" class="communities-section">
+            <div class="container">
+                <div id="childrenContainer" class="children-container">
+                    <div class="loading">Se încarcă copiii... ⏳</div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>
+                O inițiativă <strong>Something New</strong> — transformând generozitatea în speranță.
+            </p>
+            <p>
+                <a href="https://something-new.ro/" target="_blank" rel="noopener">something-new.ro</a>
+            </p>
+        </div>
+    </footer>
+
+    <!-- Letter Modal -->
+    <div id="letterModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 id="modalChildName"></h2>
+            <div id="modalLetterContent"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="app.js"></script>
+</body>
+</html>
