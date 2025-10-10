@@ -37,12 +37,24 @@ The platform automatically updates donation statuses in real time and is built e
 | text_scurt | text | Short description |
 | text_scrisoare | text | Full letter text (Markdown or HTML) |
 | poza_url | text | Link to child photo |
-| suma | integer | Donation amount (RON) |
+| suma | integer | Target donation amount (RON) |
+| suma_stransa | integer | Total amount raised so far (RON) |
 | comunitate | text | Community name |
 | status | text | `raising`, `reserved`, or `finished` |
 | payment_id | text | Payment tracking ID |
 | paid_at | timestamptz | Payment completion timestamp |
 | created_at | timestamptz | Record creation timestamp |
+
+### Table: `payments`
+| Column | Type | Description |
+|---------|------|-------------|
+| id | uuid (PK) | Unique identifier |
+| child_id | uuid (FK) | Reference to child in `children` table |
+| amount | integer | Donation amount (RON) |
+| payment_ref | text | EuPlătesc transaction reference |
+| created_at | timestamptz | Payment timestamp |
+
+**Note:** A PostgreSQL trigger automatically updates `children.suma_stransa` whenever a payment is inserted, updated, or deleted.
 
 ### RLS Policies
 ```sql
