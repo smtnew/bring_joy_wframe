@@ -507,6 +507,39 @@ function setupEventListeners() {
       }
     }
   });
+
+  // Back to top button functionality
+  setupBackToTop();
+}
+
+// Back to top functionality
+function setupBackToTop() {
+  const backToTopButton = document.getElementById("backToTop");
+  if (!backToTopButton) return;
+
+  // Show/hide button based on scroll position
+  function toggleBackToTopButton() {
+    if (window.scrollY > 300) {
+      backToTopButton.classList.add("show");
+    } else {
+      backToTopButton.classList.remove("show");
+    }
+  }
+
+  // Smooth scroll to top
+  function scrollToTop() {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  }
+
+  // Event listeners
+  window.addEventListener("scroll", toggleBackToTopButton);
+  backToTopButton.addEventListener("click", scrollToTop);
+
+  // Initial check
+  toggleBackToTopButton();
 }
 
 // Make functions globally available
