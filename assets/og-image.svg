@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#e6e1d8;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#ffffff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#e6e1d8;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="redGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ff3131;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#d92828;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#d9a837;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#c89730;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bgGradient)" />
+  
+  <!-- Decorative elements -->
+  <circle cx="100" cy="100" r="50" fill="url(#redGradient)" opacity="0.1" />
+  <circle cx="1100" cy="530" r="80" fill="url(#goldGradient)" opacity="0.1" />
+  <circle cx="1050" cy="150" r="40" fill="url(#redGradient)" opacity="0.15" />
+  
+  <!-- Gift icon (large) -->
+  <g transform="translate(80, 180)">
+    <rect x="0" y="40" width="120" height="80" rx="8" fill="url(#redGradient)" />
+    <rect x="50" y="40" width="20" height="80" fill="url(#goldGradient)" />
+    <rect x="0" y="70" width="120" height="20" fill="url(#goldGradient)" />
+    <ellipse cx="40" cy="40" rx="20" ry="15" fill="url(#goldGradient)" />
+    <ellipse cx="80" cy="40" rx="20" ry="15" fill="url(#goldGradient)" />
+    <ellipse cx="60" cy="40" rx="8" ry="8" fill="#b8861a" />
+    <rect x="10" y="50" width="100" height="8" fill="rgba(255,255,255,0.2)" rx="4" />
+  </g>
+  
+  <!-- Main text -->
+  <text x="300" y="200" font-family="Anton, Arial Black, sans-serif" font-size="72" font-weight="900" fill="url(#redGradient)" letter-spacing="2px">
+    BRING JOY
+  </text>
+  
+  <!-- Subtitle -->
+  <text x="300" y="250" font-family="Montserrat, Arial, sans-serif" font-size="32" font-weight="600" fill="url(#goldGradient)">
+    Ediția a XII-a
+  </text>
+  
+  <!-- Campaign dates -->
+  <text x="300" y="290" font-family="Montserrat, Arial, sans-serif" font-size="24" font-weight="500" fill="#666666">
+    8 octombrie – 25 decembrie 2025
+  </text>
+  
+  <!-- Description -->
+  <text x="300" y="340" font-family="Montserrat, Arial, sans-serif" font-size="22" font-weight="400" fill="#2c2c2c" text-anchor="start">
+    <tspan x="300" dy="0">Alătură-te campaniei și ajută un copil</tspan>
+    <tspan x="300" dy="30">să primească un cadou de Crăciun.</tspan>
+    <tspan x="300" dy="35">Fiecare donație transformă visul</tspan>
+    <tspan x="300" dy="30">unui copil în realitate.</tspan>
+  </text>
+  
+  <!-- Call to action -->
+  <rect x="300" y="480" width="200" height="50" rx="25" fill="url(#redGradient)" />
+  <text x="400" y="510" font-family="Montserrat, Arial, sans-serif" font-size="18" font-weight="700" fill="white" text-anchor="middle">
+    Donează acum
+  </text>
+  
+  <!-- Organization -->
+  <text x="300" y="570" font-family="Montserrat, Arial, sans-serif" font-size="16" font-weight="500" fill="#666666">
+    O inițiativă Something New
+  </text>
+  
+  <!-- Small gifts decoration -->
+  <g transform="translate(950, 250)">
+    <rect x="0" y="20" width="60" height="40" rx="4" fill="url(#redGradient)" opacity="0.8" />
+    <rect x="25" y="20" width="10" height="40" fill="url(#goldGradient)" />
+    <rect x="0" y="35" width="60" height="10" fill="url(#goldGradient)" />
+    <ellipse cx="20" cy="20" rx="10" ry="8" fill="url(#goldGradient)" />
+    <ellipse cx="40" cy="20" rx="10" ry="8" fill="url(#goldGradient)" />
+    <ellipse cx="30" cy="20" rx="4" ry="4" fill="#b8861a" />
+  </g>
+  
+  <g transform="translate(870, 320)">
+    <rect x="0" y="20" width="40" height="30" rx="3" fill="url(#goldGradient)" opacity="0.8" />
+    <rect x="17" y="20" width="6" height="30" fill="url(#redGradient)" />
+    <rect x="0" y="30" width="40" height="6" fill="url(#redGradient)" />
+    <ellipse cx="13" cy="20" rx="7" ry="5" fill="url(#redGradient)" />
+    <ellipse cx="27" cy="20" rx="7" ry="5" fill="url(#redGradient)" />
+    <ellipse cx="20" cy="20" rx="3" ry="3" fill="#d92828" />
+  </g>
+</svg>

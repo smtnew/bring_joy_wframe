@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <defs>
+    <linearGradient id="giftGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ff3131;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#d92828;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="ribbonGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#d9a837;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#c89730;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Gift box base -->
+  <rect x="4" y="12" width="24" height="16" rx="2" fill="url(#giftGradient)" />
+  
+  <!-- Vertical ribbon -->
+  <rect x="14" y="12" width="4" height="16" fill="url(#ribbonGradient)" />
+  
+  <!-- Horizontal ribbon -->
+  <rect x="4" y="18" width="24" height="4" fill="url(#ribbonGradient)" />
+  
+  <!-- Bow top left -->
+  <ellipse cx="12" cy="12" rx="4" ry="3" fill="url(#ribbonGradient)" />
+  
+  <!-- Bow top right -->
+  <ellipse cx="20" cy="12" rx="4" ry="3" fill="url(#ribbonGradient)" />
+  
+  <!-- Bow center -->
+  <ellipse cx="16" cy="12" rx="2" ry="2" fill="#b8861a" />
+  
+  <!-- Highlight on gift box -->
+  <rect x="6" y="14" width="20" height="2" fill="rgba(255,255,255,0.2)" rx="1" />
+</svg>

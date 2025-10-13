@@ -1,0 +1,25 @@
+User-agent: *
+Allow: /
+
+# Sitemaps
+Sitemap: https://bringjoy.something-new.ro/sitemap.xml
+
+# Allow crawling of all pages
+Allow: /index.html
+Allow: /about.html
+Allow: /assets/
+Allow: /styles.css
+Allow: /app.js
+Allow: /manifest.json
+
+# Block sensitive configuration files
+Disallow: /config.json
+Disallow: /supabase/
+Disallow: /.env*
+Disallow: /package.json
+Disallow: /README.md
+Disallow: /SETUP.md
+Disallow: /SPEC.md
+
+# Crawl delay (be nice to the server)
+Crawl-delay: 1
