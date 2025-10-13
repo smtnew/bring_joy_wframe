@@ -2,7 +2,7 @@ User-agent: *
 Allow: /
 
 # Sitemaps
-Sitemap: https://bringjoy.something-new.ro/sitemap.xml
+Sitemap: https://bring-joy.vercel.app/sitemap.xml
 
 # Allow crawling of all pages
 Allow: /index.html
