@@ -57,17 +57,124 @@ header {
 nav {
   display: flex;
   gap: 2rem;
+  align-items: center;
 }
 
-nav a {
+nav > a {
   color: var(--color-white);
   text-decoration: none;
   font-weight: 600;
   transition: opacity 0.3s ease;
 }
 
-nav a:hover {
+nav > a:hover {
   opacity: 0.8;
+}
+
+/* Navigation Dropdown */
+.nav-dropdown {
+  position: relative;
+}
+
+.nav-dropdown-toggle {
+  background: none;
+  border: none;
+  color: var(--color-white);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0.5rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: opacity 0.3s ease;
+}
+
+.nav-dropdown-toggle:hover {
+  opacity: 0.8;
+}
+
+.dropdown-arrow {
+  font-size: 0.8rem;
+  transition: transform 0.3s ease;
+}
+
+.nav-dropdown-toggle[aria-expanded="true"] .dropdown-arrow {
+  transform: rotate(180deg);
+}
+
+.nav-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: var(--color-white);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  min-width: 200px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: all 0.3s ease;
+  z-index: 1000;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  margin-top: 0.5rem;
+}
+
+.nav-dropdown-menu.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.nav-dropdown-item {
+  display: block;
+  padding: 0.75rem 1rem;
+  color: var(--color-dark);
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  border-radius: 4px;
+  margin: 0.25rem;
+}
+
+.nav-dropdown-item:hover {
+  background-color: var(--color-light-gray);
+  color: var(--color-red);
+}
+
+.nav-dropdown-item:first-child {
+  font-weight: 600;
+  color: var(--color-red);
+}
+
+.nav-dropdown-divider {
+  height: 1px;
+  background-color: var(--color-beige);
+  margin: 0.5rem 0;
+}
+
+.communities-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.communities-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.communities-list::-webkit-scrollbar-track {
+  background: var(--color-light-gray);
+  border-radius: 2px;
+}
+
+.communities-list::-webkit-scrollbar-thumb {
+  background: var(--color-gold);
+  border-radius: 2px;
+}
+
+.communities-list::-webkit-scrollbar-thumb:hover {
+  background: #c89730;
 }
 
 /* Hero Section */
@@ -274,6 +381,10 @@ nav a:hover {
   padding-bottom: 0.5rem;
   border-bottom: 3px solid var(--color-gold);
   letter-spacing: 1px;
+}
+
+.community-group {
+  transition: all 0.3s ease;
 }
 
 .children-grid {
@@ -639,6 +750,27 @@ footer a:hover {
   nav {
     flex-direction: column;
     gap: 0.5rem;
+    width: 100%;
+  }
+
+  .nav-dropdown {
+    width: 100%;
+  }
+
+  .nav-dropdown-toggle {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .nav-dropdown-menu {
+    left: 50%;
+    transform: translateX(-50%) translateY(-10px);
+    width: 90vw;
+    max-width: 300px;
+  }
+
+  .nav-dropdown-menu.show {
+    transform: translateX(-50%) translateY(0);
   }
 
   .cta-buttons {

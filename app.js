@@ -32,6 +32,13 @@ const modalChildName = document.getElementById("modalChildName");
 const modalLetterContent = document.getElementById("modalLetterContent");
 const closeModal = document.querySelector(".close");
 
+// Navigation dropdown elements
+const communitiesDropdown = document.getElementById("communitiesDropdown");
+const communitiesDropdownMenu = document.getElementById(
+  "communitiesDropdownMenu"
+);
+const communitiesList = document.getElementById("communitiesList");
+
 // Donation modal elements
 let currentDonationChildId = null;
 
@@ -136,8 +143,9 @@ function renderChildren(children) {
   // Render grouped children
   let html = "";
   for (const [community, communityChildren] of Object.entries(grouped)) {
+    const communityId = `community-${encodeURIComponent(community)}`;
     html += `
-            <div class="community-group">
+            <div class="community-group" id="${communityId}">
                 <h2 class="community-title">${community}</h2>
                 <div class="children-grid">
                     ${communityChildren
@@ -149,6 +157,84 @@ function renderChildren(children) {
   }
 
   childrenContainer.innerHTML = html;
+
+  // Populate communities dropdown after rendering
+  populateCommunitiesDropdown();
+}
+
+// Populate communities dropdown
+function populateCommunitiesDropdown() {
+  if (!communitiesList || !allChildren.length) return;
+
+  // Get unique communities from children data
+  const communities = [
+    ...new Set(allChildren.map((child) => child.comunitate)),
+  ].sort();
+
+  // Clear existing communities
+  communitiesList.innerHTML = "";
+
+  // Add each community as a dropdown item
+  communities.forEach((community) => {
+    const communityItem = document.createElement("a");
+    communityItem.href = `#community-${encodeURIComponent(community)}`;
+    communityItem.className = "nav-dropdown-item";
+    communityItem.role = "menuitem";
+    communityItem.textContent = community;
+    communityItem.addEventListener("click", (e) => {
+      e.preventDefault();
+      scrollToCommunity(community);
+      closeCommunitiesDropdown();
+    });
+
+    communitiesList.appendChild(communityItem);
+  });
+}
+
+// Scroll to specific community
+function scrollToCommunity(communityName) {
+  // First scroll to communities section
+  const communitiesSection = document.getElementById("communities");
+  if (communitiesSection) {
+    communitiesSection.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  // Then find and scroll to the specific community
+  setTimeout(() => {
+    const communityGroups = document.querySelectorAll(".community-group");
+    for (const group of communityGroups) {
+      const titleElement = group.querySelector(".community-title");
+      if (titleElement && titleElement.textContent.trim() === communityName) {
+        group.scrollIntoView({ behavior: "smooth", block: "start" });
+        // Add a temporary highlight effect
+        group.style.transition = "all 0.3s ease";
+        group.style.backgroundColor = "rgba(255, 49, 49, 0.05)";
+        group.style.borderRadius = "8px";
+        group.style.padding = "1rem";
+        setTimeout(() => {
+          group.style.backgroundColor = "";
+          group.style.padding = "";
+        }, 2000);
+        break;
+      }
+    }
+  }, 500);
+}
+
+// Open communities dropdown
+function openCommunitiesDropdown() {
+  if (!communitiesDropdown || !communitiesDropdownMenu) return;
+
+  communitiesDropdown.setAttribute("aria-expanded", "true");
+  communitiesDropdownMenu.classList.add("show");
+}
+
+// Close communities dropdown
+function closeCommunitiesDropdown() {
+  if (!communitiesDropdown || !communitiesDropdownMenu) return;
+
+  communitiesDropdown.setAttribute("aria-expanded", "false");
+  communitiesDropdownMenu.classList.remove("show");
 }
 
 // Render individual child card
@@ -473,6 +559,29 @@ function setupEventListeners() {
     });
   }
 
+  // Communities dropdown
+  if (communitiesDropdown && communitiesDropdownMenu) {
+    communitiesDropdown.addEventListener("click", () => {
+      const isOpen =
+        communitiesDropdown.getAttribute("aria-expanded") === "true";
+      if (isOpen) {
+        closeCommunitiesDropdown();
+      } else {
+        openCommunitiesDropdown();
+      }
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener("click", (event) => {
+      if (
+        !communitiesDropdown.contains(event.target) &&
+        !communitiesDropdownMenu.contains(event.target)
+      ) {
+        closeCommunitiesDropdown();
+      }
+    });
+  }
+
   // Modal close button
   if (closeModal) {
     closeModal.addEventListener("click", closeLetter);
@@ -499,6 +608,14 @@ function setupEventListeners() {
 
       if (searchPanel && searchPanel.dataset.open === "true") {
         closeSearchPanel();
+        handled = true;
+      }
+
+      if (
+        communitiesDropdown &&
+        communitiesDropdown.getAttribute("aria-expanded") === "true"
+      ) {
+        closeCommunitiesDropdown();
         handled = true;
       }
 

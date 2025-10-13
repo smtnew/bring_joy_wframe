@@ -150,7 +150,34 @@
         <div class="header-content">
           <h1 class="logo">🎁 Bring Joy</h1>
           <nav>
-            <a href="#communities">Comunități</a>
+            <div class="nav-dropdown">
+              <button
+                id="communitiesDropdown"
+                class="nav-dropdown-toggle"
+                aria-expanded="false"
+                aria-haspopup="true"
+              >
+                Comunități
+                <span class="dropdown-arrow">▼</span>
+              </button>
+              <div
+                id="communitiesDropdownMenu"
+                class="nav-dropdown-menu"
+                role="menu"
+              >
+                <a
+                  href="#communities"
+                  class="nav-dropdown-item"
+                  role="menuitem"
+                >
+                  Toate comunitățile
+                </a>
+                <div class="nav-dropdown-divider"></div>
+                <div id="communitiesList" class="communities-list">
+                  <!-- Communities will be loaded dynamically -->
+                </div>
+              </div>
+            </div>
             <a href="about.html">Despre campanie</a>
           </nav>
         </div>
