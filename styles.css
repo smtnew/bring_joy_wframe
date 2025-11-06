@@ -52,6 +52,19 @@ header {
   font-size: 1.5rem;
   letter-spacing: 1px;
   text-transform: uppercase;
+  display: block;
+  line-height: 0;
+}
+
+.logo-image {
+  height: 50px;
+  width: auto;
+  display: block;
+  transition: opacity 0.3s ease;
+}
+
+.logo:hover .logo-image {
+  opacity: 0.9;
 }
 
 nav {
@@ -617,18 +630,22 @@ footer a:hover {
 }
 
 .about-hero {
-  background: linear-gradient(135deg, var(--color-red) 0%, #d92828 100%);
-  color: var(--color-white);
+  background: linear-gradient(
+    135deg,
+    var(--color-white) 0%,
+    var(--color-beige) 100%
+  );
+  color: var(--color-dark);
   padding: 4rem 0;
   text-align: center;
 }
 
 .about-hero .hero-title {
-  color: var(--color-white);
+  color: var(--color-red);
 }
 
 .about-hero .hero-subtitle {
-  color: var(--color-beige);
+  color: var(--color-gold);
 }
 
 .about-content {

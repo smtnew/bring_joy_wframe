@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 450 130" width="450" height="130">
+  <defs>
+    <style>
+      .logo-text-bring { 
+        font-family: 'Anton', Arial Black, sans-serif; 
+        font-weight: 900;
+        font-size: 56px;
+        fill: #ffffff;
+        letter-spacing: 2px;
+      }
+      .logo-text-joy { 
+        font-family: 'Brush Script MT', 'Lucida Handwriting', 'Segoe Script', cursive; 
+        font-weight: 400;
+        font-size: 66px;
+        fill: #ffffff;
+        font-style: italic;
+      }
+      .logo-text-edition { 
+        font-family: 'Montserrat', Arial, sans-serif; 
+        font-weight: 600;
+        font-size: 20px;
+        fill: #d9a837;
+        letter-spacing: 1px;
+      }
+      .star-ray { 
+        stroke: #d9a837; 
+        stroke-width: 3; 
+        stroke-linecap: round;
+      }
+      .star-center { fill: #d9a837; }
+    </style>
+  </defs>
+  
+  <!-- Shining star icon with radiating lines -->
+  <g transform="translate(45, 65)">
+    <!-- Large star with 8 rays -->
+    <!-- Vertical ray -->
+    <line class="star-ray" x1="0" y1="-30" x2="0" y2="30" />
+    <!-- Horizontal ray -->
+    <line class="star-ray" x1="-30" y1="0" x2="30" y2="0" />
+    <!-- Diagonal rays -->
+    <line class="star-ray" x1="-21" y1="-21" x2="21" y2="21" />
+    <line class="star-ray" x1="21" y1="-21" x2="-21" y2="21" />
+    
+    <!-- Center circle -->
+    <circle class="star-center" cx="0" cy="0" r="4" />
+    
+    <!-- Smaller sparkle to the right -->
+    <g transform="translate(30, -18)">
+      <!-- Vertical ray -->
+      <line class="star-ray" x1="0" y1="-15" x2="0" y2="15" stroke-width="2.5" />
+      <!-- Horizontal ray -->
+      <line class="star-ray" x1="-15" y1="0" x2="15" y2="0" stroke-width="2.5" />
+      <!-- Diagonal rays -->
+      <line class="star-ray" x1="-10" y1="-10" x2="10" y2="10" stroke-width="2.5" />
+      <line class="star-ray" x1="10" y1="-10" x2="-10" y2="10" stroke-width="2.5" />
+      <!-- Center -->
+      <circle class="star-center" cx="0" cy="0" r="2.5" />
+    </g>
+  </g>
+  
+  <!-- Main text "BRING" in bold -->
+  <text x="105" y="72" class="logo-text-bring">BRING</text>
+  
+  <!-- "JOY" in cursive handwriting -->
+  <text x="285" y="80" class="logo-text-joy">Joy</text>
+  
+  <!-- Edition text "Ediția a XII-a" -->
+  <text x="108" y="102" class="logo-text-edition">EDIȚIA A XII-A</text>
+</svg>
