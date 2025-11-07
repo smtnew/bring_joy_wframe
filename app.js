@@ -144,9 +144,12 @@ function renderChildren(children) {
   let html = "";
   for (const [community, communityChildren] of Object.entries(grouped)) {
     const communityId = `community-${encodeURIComponent(community)}`;
+    const childrenCount = communityChildren.length;
     html += `
             <div class="community-group" id="${communityId}">
-                <h2 class="community-title">${community}</h2>
+                <h2 class="community-title">${community} (${childrenCount} ${
+      childrenCount === 1 ? "copil" : "copii"
+    })</h2>
                 <div class="children-grid">
                     ${communityChildren
                       .map((child) => renderChildCard(child))
@@ -158,17 +161,23 @@ function renderChildren(children) {
 
   childrenContainer.innerHTML = html;
 
-  // Populate communities dropdown after rendering
-  populateCommunitiesDropdown();
+  // Populate communities dropdown after rendering with current children
+  populateCommunitiesDropdown(children);
 }
 
 // Populate communities dropdown
-function populateCommunitiesDropdown() {
-  if (!communitiesList || !allChildren.length) return;
+function populateCommunitiesDropdown(children = allChildren) {
+  if (!communitiesList || !children.length) return;
+
+  // Group children by community to get counts
+  const communityCounts = children.reduce((acc, child) => {
+    acc[child.comunitate] = (acc[child.comunitate] || 0) + 1;
+    return acc;
+  }, {});
 
   // Get unique communities from children data
   const communities = [
-    ...new Set(allChildren.map((child) => child.comunitate)),
+    ...new Set(children.map((child) => child.comunitate)),
   ].sort();
 
   // Clear existing communities
@@ -180,7 +189,12 @@ function populateCommunitiesDropdown() {
     communityItem.href = `#community-${encodeURIComponent(community)}`;
     communityItem.className = "nav-dropdown-item";
     communityItem.role = "menuitem";
-    communityItem.textContent = community;
+
+    const childrenCount = communityCounts[community];
+    communityItem.textContent = `${community} (${childrenCount} ${
+      childrenCount === 1 ? "copil" : "copii"
+    })`;
+
     communityItem.addEventListener("click", (e) => {
       e.preventDefault();
       scrollToCommunity(community);
