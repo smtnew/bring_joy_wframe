@@ -215,22 +215,20 @@ function scrollToCommunity(communityName) {
 
   // Then find and scroll to the specific community
   setTimeout(() => {
-    const communityGroups = document.querySelectorAll(".community-group");
-    for (const group of communityGroups) {
-      const titleElement = group.querySelector(".community-title");
-      if (titleElement && titleElement.textContent.trim() === communityName) {
-        group.scrollIntoView({ behavior: "smooth", block: "start" });
-        // Add a temporary highlight effect
-        group.style.transition = "all 0.3s ease";
-        group.style.backgroundColor = "rgba(255, 49, 49, 0.05)";
-        group.style.borderRadius = "8px";
-        group.style.padding = "1rem";
-        setTimeout(() => {
-          group.style.backgroundColor = "";
-          group.style.padding = "";
-        }, 2000);
-        break;
-      }
+    const communityId = `community-${encodeURIComponent(communityName)}`;
+    const communityGroup = document.getElementById(communityId);
+
+    if (communityGroup) {
+      communityGroup.scrollIntoView({ behavior: "smooth", block: "start" });
+      // Add a temporary highlight effect
+      communityGroup.style.transition = "all 0.3s ease";
+      communityGroup.style.backgroundColor = "rgba(255, 49, 49, 0.05)";
+      communityGroup.style.borderRadius = "8px";
+      communityGroup.style.padding = "1rem";
+      setTimeout(() => {
+        communityGroup.style.backgroundColor = "";
+        communityGroup.style.padding = "";
+      }, 2000);
     }
   }, 500);
 }
