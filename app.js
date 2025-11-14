@@ -144,9 +144,12 @@ function renderChildren(children) {
   let html = "";
   for (const [community, communityChildren] of Object.entries(grouped)) {
     const communityId = `community-${encodeURIComponent(community)}`;
+    const childrenCount = communityChildren.length;
     html += `
             <div class="community-group" id="${communityId}">
-                <h2 class="community-title">${community}</h2>
+                <h2 class="community-title">${community} (${childrenCount} ${
+      childrenCount === 1 ? "copil" : "copii"
+    })</h2>
                 <div class="children-grid">
                     ${communityChildren
                       .map((child) => renderChildCard(child))
@@ -158,17 +161,23 @@ function renderChildren(children) {
 
   childrenContainer.innerHTML = html;
 
-  // Populate communities dropdown after rendering
-  populateCommunitiesDropdown();
+  // Populate communities dropdown after rendering with current children
+  populateCommunitiesDropdown(children);
 }
 
 // Populate communities dropdown
-function populateCommunitiesDropdown() {
-  if (!communitiesList || !allChildren.length) return;
+function populateCommunitiesDropdown(children = allChildren) {
+  if (!communitiesList || !children.length) return;
+
+  // Group children by community to get counts
+  const communityCounts = children.reduce((acc, child) => {
+    acc[child.comunitate] = (acc[child.comunitate] || 0) + 1;
+    return acc;
+  }, {});
 
   // Get unique communities from children data
   const communities = [
-    ...new Set(allChildren.map((child) => child.comunitate)),
+    ...new Set(children.map((child) => child.comunitate)),
   ].sort();
 
   // Clear existing communities
@@ -180,7 +189,12 @@ function populateCommunitiesDropdown() {
     communityItem.href = `#community-${encodeURIComponent(community)}`;
     communityItem.className = "nav-dropdown-item";
     communityItem.role = "menuitem";
-    communityItem.textContent = community;
+
+    const childrenCount = communityCounts[community];
+    communityItem.textContent = `${community} (${childrenCount} ${
+      childrenCount === 1 ? "copil" : "copii"
+    })`;
+
     communityItem.addEventListener("click", (e) => {
       e.preventDefault();
       scrollToCommunity(community);
@@ -201,22 +215,20 @@ function scrollToCommunity(communityName) {
 
   // Then find and scroll to the specific community
   setTimeout(() => {
-    const communityGroups = document.querySelectorAll(".community-group");
-    for (const group of communityGroups) {
-      const titleElement = group.querySelector(".community-title");
-      if (titleElement && titleElement.textContent.trim() === communityName) {
-        group.scrollIntoView({ behavior: "smooth", block: "start" });
-        // Add a temporary highlight effect
-        group.style.transition = "all 0.3s ease";
-        group.style.backgroundColor = "rgba(255, 49, 49, 0.05)";
-        group.style.borderRadius = "8px";
-        group.style.padding = "1rem";
-        setTimeout(() => {
-          group.style.backgroundColor = "";
-          group.style.padding = "";
-        }, 2000);
-        break;
-      }
+    const communityId = `community-${encodeURIComponent(communityName)}`;
+    const communityGroup = document.getElementById(communityId);
+
+    if (communityGroup) {
+      communityGroup.scrollIntoView({ behavior: "smooth", block: "start" });
+      // Add a temporary highlight effect
+      communityGroup.style.transition = "all 0.3s ease";
+      communityGroup.style.backgroundColor = "rgba(255, 49, 49, 0.05)";
+      communityGroup.style.borderRadius = "8px";
+      communityGroup.style.padding = "1rem";
+      setTimeout(() => {
+        communityGroup.style.backgroundColor = "";
+        communityGroup.style.padding = "";
+      }, 2000);
     }
   }, 500);
 }
