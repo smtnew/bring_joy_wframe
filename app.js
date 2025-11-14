@@ -426,8 +426,8 @@ async function confirmDonation() {
       throw new Error(data.error || "Eroare la procesarea donației");
     }
 
-    // Redirect to payment page in a new tab to keep the campaign open
-    window.open(data.redirect, "_blank", "noopener,noreferrer");
+    // Redirect to payment page (same window for mobile compatibility)
+    window.location.href = data.redirect;
   } catch (error) {
     console.error("Error creating payment:", error);
     alert(
