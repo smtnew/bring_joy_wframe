@@ -2,50 +2,36 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 // @ts-ignore: Deno resolves remote modules at runtime.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-declare const Deno: {
-  env: {
-    get(key: string): string | undefined;
-  };
-};
-
 const encoder = new TextEncoder();
-
-function hexToBytes(hex: string): Uint8Array {
+function hexToBytes(hex) {
   const bytes = new Uint8Array(hex.length / 2);
   for (let i = 0; i < hex.length; i += 2) {
     bytes[i / 2] = parseInt(hex.slice(i, i + 2), 16);
   }
   return bytes;
 }
-
-function bytesToHex(bytes: Uint8Array): string {
+function bytesToHex(bytes) {
   return Array.from(bytes)
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
 }
-
-function rotateLeft(value: number, amount: number): number {
+function rotateLeft(value, amount) {
   return ((value << amount) | (value >>> (32 - amount))) >>> 0;
 }
-
-function md5Bytes(message: Uint8Array): Uint8Array {
+function md5Bytes(message) {
   const originalLengthBits = message.length * 8;
   const paddedLength = (((message.length + 8) >>> 6) << 4) + 16;
   const words = new Uint32Array(paddedLength);
-
   for (let i = 0; i < message.length; i++) {
     words[i >> 2] |= message[i] << ((i % 4) * 8);
   }
   words[message.length >> 2] |= 0x80 << ((message.length % 4) * 8);
   words[paddedLength - 2] = originalLengthBits & 0xffffffff;
   words[paddedLength - 1] = Math.floor(originalLengthBits / 0x100000000);
-
   let a = 0x67452301;
   let b = 0xefcdab89;
   let c = 0x98badcfe;
   let d = 0x10325476;
-
   const k = new Uint32Array([
     0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee, 0xf57c0faf, 0x4787c62a,
     0xa8304613, 0xfd469501, 0x698098d8, 0x8b44f7af, 0xffff5bb1, 0x895cd7be,
@@ -59,24 +45,19 @@ function md5Bytes(message: Uint8Array): Uint8Array {
     0xffeff47d, 0x85845dd1, 0x6fa87e4f, 0xfe2ce6e0, 0xa3014314, 0x4e0811a1,
     0xf7537e82, 0xbd3af235, 0x2ad7d2bb, 0xeb86d391,
   ]);
-
   const s = new Uint8Array([
     7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 5, 9, 14, 20, 5,
     9, 14, 20, 5, 9, 14, 20, 5, 9, 14, 20, 4, 11, 16, 23, 4, 11, 16, 23, 4, 11,
     16, 23, 4, 11, 16, 23, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10,
     15, 21,
   ]);
-
   for (let i = 0; i < words.length; i += 16) {
     let aa = a;
     let bb = b;
     let cc = c;
     let dd = d;
-
     for (let j = 0; j < 64; j++) {
-      let f: number;
-      let g: number;
-
+      let f, g;
       if (j < 16) {
         f = (bb & cc) | (~bb & dd);
         g = j;
@@ -90,7 +71,6 @@ function md5Bytes(message: Uint8Array): Uint8Array {
         f = cc ^ (bb | ~dd);
         g = (7 * j) % 16;
       }
-
       const temp = dd;
       dd = cc;
       cc = bb;
@@ -98,13 +78,11 @@ function md5Bytes(message: Uint8Array): Uint8Array {
       bb = (bb + rotateLeft(sum, s[j])) >>> 0;
       aa = temp;
     }
-
     a = (a + aa) >>> 0;
     b = (b + bb) >>> 0;
     c = (c + cc) >>> 0;
     d = (d + dd) >>> 0;
   }
-
   const out = new Uint8Array(16);
   const state = [a, b, c, d];
   for (let i = 0; i < 4; i++) {
@@ -113,60 +91,46 @@ function md5Bytes(message: Uint8Array): Uint8Array {
     out[i * 4 + 2] = (state[i] >>> 16) & 0xff;
     out[i * 4 + 3] = (state[i] >>> 24) & 0xff;
   }
-
   return out;
 }
-
-function md5HexFromBytes(message: Uint8Array): string {
+function md5HexFromBytes(message) {
   return bytesToHex(md5Bytes(message));
 }
-
-function euplatescMac(data: (string | null)[], hexKey: string): string {
+function euplatescMac(data, hexKey) {
   let str = "";
-
   for (const d of data) {
     if (d === null || d.length === 0) {
-      str += "-"; // null values are replaced with -
+      str += "-";
     } else {
       const length = encoder.encode(d).length;
       str += length.toString() + d;
     }
   }
-
   let keyBytes = hexToBytes(hexKey);
-
   if (keyBytes.length > 64) {
     keyBytes = md5Bytes(keyBytes);
   }
-
   const paddedKey = new Uint8Array(64);
   paddedKey.set(keyBytes);
-
   const ipad = new Uint8Array(64);
   const opad = new Uint8Array(64);
   for (let i = 0; i < 64; i++) {
     ipad[i] = paddedKey[i] ^ 0x36;
     opad[i] = paddedKey[i] ^ 0x5c;
   }
-
   const messageBytes = encoder.encode(str);
   const innerData = new Uint8Array(ipad.length + messageBytes.length);
   innerData.set(ipad);
   innerData.set(messageBytes, ipad.length);
   const innerHash = md5Bytes(innerData);
-
   const outerData = new Uint8Array(opad.length + innerHash.length);
   outerData.set(opad);
   outerData.set(innerHash, opad.length);
-
   return md5HexFromBytes(outerData);
 }
-
-serve(async (req: Request) => {
+serve(async (req) => {
   try {
-    // Parse form data from EuPlătesc IPN
     const formData = await req.formData();
-
     const amount = formData.get("amount")?.toString();
     const curr = formData.get("curr")?.toString();
     const invoiceId = formData.get("invoice_id")?.toString();
@@ -177,26 +141,24 @@ serve(async (req: Request) => {
     const approval = formData.get("approval")?.toString();
     const extraChildId = formData.get("ExtraData[child_id]")?.toString();
     const extraAmount = formData.get("ExtraData[amount]")?.toString();
+    const extraDonorName = formData.get("ExtraData[donor_name]")?.toString();
+    const extraDonorEmail = formData.get("ExtraData[donor_email]")?.toString();
+    const extraDonorPhone = formData.get("ExtraData[donor_phone]")?.toString();
     const timestamp = formData.get("timestamp")?.toString();
     const nonce = formData.get("nonce")?.toString();
     const fpHash = formData.get("fp_hash")?.toString();
-
     console.log("IPN received:", {
       invoiceId,
       amount,
       extraChildId,
     });
-
-    // Validate required fields
     if (!invoiceId || !fpHash) {
       console.error("Missing required fields");
-      return new Response("Missing required fields", { status: 400 });
+      return new Response("Missing required fields", {
+        status: 400,
+      });
     }
-
-    // Verify HMAC signature using EuPlătesc algorithm
-    const euplatescKey = Deno.env.get("EUPLATESC_KEY")!;
-
-    // Build the data array for verification (order matters!)
+    const euplatescKey = Deno.env.get("EUPLATESC_KEY");
     const dataForMac = [
       amount || null,
       curr || null,
@@ -209,117 +171,136 @@ serve(async (req: Request) => {
       timestamp || null,
       nonce || null,
     ];
-
     const calculatedHash = euplatescMac(dataForMac, euplatescKey).toUpperCase();
     const receivedHash = fpHash.toUpperCase();
-
     if (calculatedHash !== receivedHash) {
       console.error("Invalid signature:", {
         received: receivedHash,
         calculated: calculatedHash,
       });
-      return new Response("Invalid signature", { status: 403 });
+      return new Response("Invalid signature", {
+        status: 403,
+      });
     }
-
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
     if (!extraChildId) {
       console.error("Missing child reference in ExtraData");
-      return new Response("Child reference missing", { status: 400 });
+      return new Response("Child reference missing", {
+        status: 400,
+      });
     }
-
     const { data: child, error: findError } = await supabase
       .from("children")
       .select("id, suma, suma_stransa")
       .eq("id", extraChildId)
       .single();
-
     if (findError || !child) {
       console.error("Child not found for payment:", {
         invoiceId,
         extraChildId,
         error: findError,
       });
-      return new Response("Child not found", { status: 404 });
+      return new Response("Child not found", {
+        status: 404,
+      });
     }
+    // 🔸 Only process payment if action = "0"
+    if (action === "0") {
+      const paymentAmountRon = extraAmount
+        ? parseInt(extraAmount, 10)
+        : Math.round(parseFloat(amount || "0"));
 
-    // Parse the payment amount - use extraAmount if available, otherwise use amount from EuPlătesc
-    const paymentAmountRon = extraAmount 
-      ? parseInt(extraAmount, 10) 
-      : Math.round(parseFloat(amount || "0"));
-
-    // Insert payment record
-    const { error: insertError } = await supabase
-      .from("payments")
-      .insert({
+      // Build payment record with donor information
+      const paymentRecord: any = {
         child_id: child.id,
         amount: paymentAmountRon,
         payment_ref: invoiceId ?? null,
-      });
+      };
 
-    if (insertError) {
-      console.error("Error inserting payment:", insertError);
-      return new Response("Error recording payment", { status: 500 });
-    }
-
-    // The trigger will automatically update suma_stransa
-    // Now check if the child has reached the target amount
-    const { data: updatedChild, error: fetchError } = await supabase
-      .from("children")
-      .select("suma, suma_stransa")
-      .eq("id", child.id)
-      .single();
-
-    if (fetchError) {
-      console.error("Error fetching updated child:", fetchError);
-      return new Response("Error checking child status", { status: 500 });
-    }
-
-    // If the child has reached or exceeded the target amount, mark as finished
-    if (updatedChild.suma_stransa >= updatedChild.suma) {
-      let paidAtIso: string;
-      if (timestamp && timestamp.length === 14) {
-        const year = Number(timestamp.slice(0, 4));
-        const month = Number(timestamp.slice(4, 6)) - 1;
-        const day = Number(timestamp.slice(6, 8));
-        const hour = Number(timestamp.slice(8, 10));
-        const minute = Number(timestamp.slice(10, 12));
-        const second = Number(timestamp.slice(12, 14));
-        const parsed = new Date(Date.UTC(year, month, day, hour, minute, second));
-        paidAtIso = parsed.toISOString();
-      } else {
-        paidAtIso = new Date().toISOString();
+      // Add donor information if provided
+      if (extraDonorName) {
+        paymentRecord.donor_name = extraDonorName;
+      }
+      if (extraDonorEmail) {
+        paymentRecord.donor_email = extraDonorEmail;
+      }
+      if (extraDonorPhone) {
+        paymentRecord.donor_phone = extraDonorPhone;
       }
 
-      const { error: updateError } = await supabase
+      const { error: insertError } = await supabase
+        .from("payments")
+        .insert(paymentRecord);
+      if (insertError) {
+        console.error("Error inserting payment:", insertError);
+        return new Response("Error recording payment", {
+          status: 500,
+        });
+      }
+      const { data: updatedChild, error: fetchError } = await supabase
         .from("children")
-        .update({
-          status: "finished",
-          paid_at: paidAtIso,
-          payment_id: invoiceId ?? null,
-        })
-        .eq("id", child.id);
-
-      if (updateError) {
-        console.error("Error updating child status:", updateError);
-        return new Response("Error updating status", { status: 500 });
+        .select("suma, suma_stransa")
+        .eq("id", child.id)
+        .single();
+      if (fetchError) {
+        console.error("Error fetching updated child:", fetchError);
+        return new Response("Error checking child status", {
+          status: 500,
+        });
       }
+      if (updatedChild.suma_stransa >= updatedChild.suma) {
+        let paidAtIso;
+        if (timestamp && timestamp.length === 14) {
+          const year = Number(timestamp.slice(0, 4));
+          const month = Number(timestamp.slice(4, 6)) - 1;
+          const day = Number(timestamp.slice(6, 8));
+          const hour = Number(timestamp.slice(8, 10));
+          const minute = Number(timestamp.slice(10, 12));
+          const second = Number(timestamp.slice(12, 14));
+          const parsed = new Date(
+            Date.UTC(year, month, day, hour, minute, second)
+          );
+          paidAtIso = parsed.toISOString();
+        } else {
+          paidAtIso = new Date().toISOString();
+        }
+        const { error: updateError } = await supabase
+          .from("children")
+          .update({
+            status: "finished",
+            paid_at: paidAtIso,
+            payment_id: invoiceId ?? null,
+          })
+          .eq("id", child.id);
+        if (updateError) {
+          console.error("Error updating child status:", updateError);
+          return new Response("Error updating status", {
+            status: 500,
+          });
+        }
+      }
+      console.log("Payment recorded:", {
+        childId: child.id,
+        amount: paymentAmountRon,
+        timestamp,
+        totalRaised: updatedChild.suma_stransa,
+        target: updatedChild.suma,
+      });
+    } else {
+      console.log("Payment ignored: action is not 0", {
+        invoiceId,
+        action,
+      });
     }
-
-    console.log("Payment recorded:", {
-      childId: child.id,
-      amount: paymentAmountRon,
-      timestamp,
-      totalRaised: updatedChild.suma_stransa,
-      target: updatedChild.suma,
+    return new Response("OK", {
+      status: 200,
     });
-
-    return new Response("OK", { status: 200 });
   } catch (error) {
     console.error("Error in notify:", error);
-    return new Response("Internal server error", { status: 500 });
+    return new Response("Internal server error", {
+      status: 500,
+    });
   }
 });

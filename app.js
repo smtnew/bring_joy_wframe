@@ -413,10 +413,62 @@ async function confirmDonation() {
     return;
   }
 
+  // Collect mandatory donor information
+  const donorNameInput = document.getElementById("donorName");
+  const donorEmailInput = document.getElementById("donorEmail");
+  const donorPhoneInput = document.getElementById("donorPhone");
+  const errorMessageEl = document.getElementById("donationErrorMessage");
+
+  const donorName = donorNameInput?.value.trim() || "";
+  const donorEmail = donorEmailInput?.value.trim() || "";
+  const donorPhone = donorPhoneInput?.value.trim() || "";
+
+  // Clear previous error states
+  [donorNameInput, donorEmailInput, donorPhoneInput].forEach((input) => {
+    if (input) input.classList.remove("field-error");
+  });
+  if (errorMessageEl) {
+    errorMessageEl.style.display = "none";
+    errorMessageEl.textContent = "";
+  }
+
+  // Validate all donor fields are filled
+  const emptyFields = [];
+  if (!donorName) {
+    donorNameInput?.classList.add("field-error");
+    emptyFields.push("Nume");
+  }
+  if (!donorEmail) {
+    donorEmailInput?.classList.add("field-error");
+    emptyFields.push("Email");
+  }
+  if (!donorPhone) {
+    donorPhoneInput?.classList.add("field-error");
+    emptyFields.push("Telefon");
+  }
+
+  if (emptyFields.length > 0) {
+    if (errorMessageEl) {
+      errorMessageEl.textContent = `Te rugăm să completezi: ${emptyFields.join(
+        ", "
+      )}`;
+      errorMessageEl.style.display = "block";
+    }
+    return;
+  }
+
   try {
     closeDonationModal();
 
     // Call create-payment edge function
+    const requestBody = {
+      child_id: childId,
+      amount: amount,
+      donor_name: donorName,
+      donor_email: donorEmail,
+      donor_phone: donorPhone,
+    };
+
     const response = await fetch(
       `${SUPABASE_URL}/functions/v1/create-payment`,
       {
@@ -425,10 +477,7 @@ async function confirmDonation() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
         },
-        body: JSON.stringify({
-          child_id: childId,
-          amount: amount,
-        }),
+        body: JSON.stringify(requestBody),
       }
     );
 

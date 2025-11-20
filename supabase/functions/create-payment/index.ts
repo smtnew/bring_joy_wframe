@@ -2,55 +2,41 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 // @ts-ignore: Deno provides remote module resolution at runtime.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-declare const Deno: {
-  env: {
-    get(key: string): string | undefined;
-  };
-};
-
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
 };
 const encoder = new TextEncoder();
-
-function hexToBytes(hex: string): Uint8Array {
+function hexToBytes(hex) {
   const bytes = new Uint8Array(hex.length / 2);
   for (let i = 0; i < hex.length; i += 2) {
     bytes[i / 2] = parseInt(hex.slice(i, i + 2), 16);
   }
   return bytes;
 }
-
-function bytesToHex(bytes: Uint8Array): string {
+function bytesToHex(bytes) {
   return Array.from(bytes)
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
 }
-
-function rotateLeft(value: number, amount: number): number {
+function rotateLeft(value, amount) {
   return ((value << amount) | (value >>> (32 - amount))) >>> 0;
 }
-
-function md5Bytes(message: Uint8Array): Uint8Array {
+function md5Bytes(message) {
   const originalLengthBits = message.length * 8;
   const paddedLength = (((message.length + 8) >>> 6) << 4) + 16;
   const words = new Uint32Array(paddedLength);
-
   for (let i = 0; i < message.length; i++) {
     words[i >> 2] |= message[i] << ((i % 4) * 8);
   }
   words[message.length >> 2] |= 0x80 << ((message.length % 4) * 8);
   words[paddedLength - 2] = originalLengthBits & 0xffffffff;
   words[paddedLength - 1] = Math.floor(originalLengthBits / 0x100000000);
-
   let a = 0x67452301;
   let b = 0xefcdab89;
   let c = 0x98badcfe;
   let d = 0x10325476;
-
   const k = new Uint32Array([
     0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee, 0xf57c0faf, 0x4787c62a,
     0xa8304613, 0xfd469501, 0x698098d8, 0x8b44f7af, 0xffff5bb1, 0x895cd7be,
@@ -64,24 +50,20 @@ function md5Bytes(message: Uint8Array): Uint8Array {
     0xffeff47d, 0x85845dd1, 0x6fa87e4f, 0xfe2ce6e0, 0xa3014314, 0x4e0811a1,
     0xf7537e82, 0xbd3af235, 0x2ad7d2bb, 0xeb86d391,
   ]);
-
   const s = new Uint8Array([
     7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 5, 9, 14, 20, 5,
     9, 14, 20, 5, 9, 14, 20, 5, 9, 14, 20, 4, 11, 16, 23, 4, 11, 16, 23, 4, 11,
     16, 23, 4, 11, 16, 23, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10,
     15, 21,
   ]);
-
   for (let i = 0; i < words.length; i += 16) {
     let aa = a;
     let bb = b;
     let cc = c;
     let dd = d;
-
     for (let j = 0; j < 64; j++) {
-      let f: number;
-      let g: number;
-
+      let f;
+      let g;
       if (j < 16) {
         f = (bb & cc) | (~bb & dd);
         g = j;
@@ -95,7 +77,6 @@ function md5Bytes(message: Uint8Array): Uint8Array {
         f = cc ^ (bb | ~dd);
         g = (7 * j) % 16;
       }
-
       const temp = dd;
       dd = cc;
       cc = bb;
@@ -103,13 +84,11 @@ function md5Bytes(message: Uint8Array): Uint8Array {
       bb = (bb + rotateLeft(sum, s[j])) >>> 0;
       aa = temp;
     }
-
     a = (a + aa) >>> 0;
     b = (b + bb) >>> 0;
     c = (c + cc) >>> 0;
     d = (d + dd) >>> 0;
   }
-
   const out = new Uint8Array(16);
   const state = [a, b, c, d];
   for (let i = 0; i < 4; i++) {
@@ -118,16 +97,13 @@ function md5Bytes(message: Uint8Array): Uint8Array {
     out[i * 4 + 2] = (state[i] >>> 16) & 0xff;
     out[i * 4 + 3] = (state[i] >>> 24) & 0xff;
   }
-
   return out;
 }
-
-function md5HexFromBytes(message: Uint8Array): string {
+function md5HexFromBytes(message) {
   return bytesToHex(md5Bytes(message));
 }
-
-function formatTimestamp(date: Date): string {
-  const pad = (value: number): string => value.toString().padStart(2, "0");
+function formatTimestamp(date) {
+  const pad = (value) => value.toString().padStart(2, "0");
   return (
     date.getUTCFullYear().toString() +
     pad(date.getUTCMonth() + 1) +
@@ -137,10 +113,8 @@ function formatTimestamp(date: Date): string {
     pad(date.getUTCSeconds())
   );
 }
-
-function euplatescMac(data: (string | null)[], hexKey: string): string {
+function euplatescMac(data, hexKey) {
   let str = "";
-
   for (const d of data) {
     if (d === null || d.length === 0) {
       str += "-"; // null values are replaced with -
@@ -149,132 +123,158 @@ function euplatescMac(data: (string | null)[], hexKey: string): string {
       str += length.toString() + d;
     }
   }
-
   // Convert hex key to bytes
   let keyBytes = hexToBytes(hexKey);
-
   // HMAC key normalization
   if (keyBytes.length > 64) {
     keyBytes = md5Bytes(keyBytes);
   }
-
   const paddedKey = new Uint8Array(64);
   paddedKey.set(keyBytes);
-
   const ipad = new Uint8Array(64);
   const opad = new Uint8Array(64);
   for (let i = 0; i < 64; i++) {
     ipad[i] = paddedKey[i] ^ 0x36;
     opad[i] = paddedKey[i] ^ 0x5c;
   }
-
   const messageBytes = encoder.encode(str);
   const innerData = new Uint8Array(ipad.length + messageBytes.length);
   innerData.set(ipad);
   innerData.set(messageBytes, ipad.length);
   const innerHash = md5Bytes(innerData);
-
   const outerData = new Uint8Array(opad.length + innerHash.length);
   outerData.set(opad);
   outerData.set(innerHash, opad.length);
-
   return md5HexFromBytes(outerData);
 }
-
-serve(async (req: Request) => {
+serve(async (req) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response("ok", {
+      headers: corsHeaders,
+    });
   }
-
   try {
-    const { child_id, donor, amount: customAmount } = await req.json();
-
+    const {
+      child_id,
+      donor,
+      amount: customAmount,
+      donor_name,
+      donor_email,
+      donor_phone,
+    } = await req.json();
     if (!child_id) {
-      return new Response(JSON.stringify({ error: "child_id is required" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({
+          error: "child_id is required",
+        }),
+        {
+          status: 400,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+          },
+        }
+      );
     }
-
     // Validate custom amount if provided
     if (
       customAmount !== undefined &&
       (typeof customAmount !== "number" || customAmount <= 0)
     ) {
-      return new Response(JSON.stringify({ error: "Invalid amount" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({
+          error: "Invalid amount",
+        }),
+        {
+          status: 400,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+          },
+        }
+      );
     }
-
     // Initialize Supabase client with service role key
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
     // Get child data
     const { data: child, error: childError } = await supabase
       .from("children")
       .select("*")
       .eq("id", child_id)
       .single();
-
     if (childError || !child) {
-      return new Response(JSON.stringify({ error: "Child not found" }), {
-        status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Block donations for children no longer raising funds
-    if (child.status !== "raising") {
       return new Response(
-        JSON.stringify({ error: "Child is not available for donation" }),
+        JSON.stringify({
+          error: "Child not found",
+        }),
         {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 404,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+          },
         }
       );
     }
-
+    // Block donations for children no longer raising funds
+    if (child.status !== "raising") {
+      return new Response(
+        JSON.stringify({
+          error: "Child is not available for donation",
+        }),
+        {
+          status: 400,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
     // Generate payment ID (timestamp + random)
     const paymentId = `BJ${Date.now()}-${Math.random()
       .toString(36)
       .substr(2, 9)}`;
-
     // Determine the amount to charge - use custom amount if provided, otherwise use full child amount
     const paymentAmount =
       customAmount !== undefined ? customAmount : child.suma;
-
     const raisedSoFar = Number(child.suma_stransa || 0);
     const targetAmount = Number(child.suma);
     const remainingAmount = Math.max(targetAmount - raisedSoFar, 0);
-
     if (remainingAmount <= 0) {
       return new Response(
-        JSON.stringify({ error: "Child has already received full donation" }),
+        JSON.stringify({
+          error: "Child has already received full donation",
+        }),
         {
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+          },
         }
       );
     }
-
     if (paymentAmount > remainingAmount) {
       return new Response(
-        JSON.stringify({ error: "Donation exceeds remaining amount" }),
+        JSON.stringify({
+          error: "Donation exceeds remaining amount",
+        }),
         {
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+          },
         }
       );
     }
-
     // Prepare EuPlătesc payment data
-    const merchantId = Deno.env.get("EUPLATESC_MERCHANT_ID")!;
-    const euplatescKey = Deno.env.get("EUPLATESC_KEY")!; // This should be the hex key
-
+    const merchantId = Deno.env.get("EUPLATESC_MERCHANT_ID");
+    const euplatescKey = Deno.env.get("EUPLATESC_KEY"); // This should be the hex key
     const amount = Number(paymentAmount).toFixed(2);
     const currency = "RON";
     const orderDescription = `Donație pentru ${child.nume}`;
@@ -286,7 +286,6 @@ serve(async (req: Request) => {
     const successUrl = Deno.env.get("EUPLATESC_SUCCESS_URL") || null;
     const cancelUrl = Deno.env.get("EUPLATESC_CANCEL_URL") || null;
     const confirmUrl = Deno.env.get("EUPLATESC_CONFIRM_URL") || null;
-
     // Calculate HMAC signature (MAC) using EuPlătesc algorithm
     // Order matters! Check EuPlătesc documentation for exact parameter order
     const dataForMac = [
@@ -298,9 +297,7 @@ serve(async (req: Request) => {
       timestamp,
       nonce,
     ];
-
     const fp_hash = euplatescMac(dataForMac, euplatescKey).toUpperCase();
-
     // Build redirect URL with payment parameters
     const euplatescUrl = new URL(
       "https://secure.euplatesc.ro/tdsprocess/tranzactd.php"
@@ -313,6 +310,18 @@ serve(async (req: Request) => {
     euplatescUrl.searchParams.append("timestamp", timestamp);
     euplatescUrl.searchParams.append("nonce", nonce);
     euplatescUrl.searchParams.append("fp_hash", fp_hash);
+
+    // Add billing details
+    if (donor_name) {
+      euplatescUrl.searchParams.append("fname", donor_name);
+    }
+    if (donor_email) {
+      euplatescUrl.searchParams.append("email", donor_email);
+    }
+    if (donor_phone) {
+      euplatescUrl.searchParams.append("phone", donor_phone);
+    }
+
     if (successUrl) {
       euplatescUrl.searchParams.append("ExtraData[silenturl]", successUrl);
     }
@@ -324,6 +333,16 @@ serve(async (req: Request) => {
     if (donor) {
       euplatescUrl.searchParams.append("ExtraData[donor]", donor);
     }
+    // Add donor information to ExtraData
+    if (donor_name) {
+      euplatescUrl.searchParams.append("ExtraData[donor_name]", donor_name);
+    }
+    if (donor_email) {
+      euplatescUrl.searchParams.append("ExtraData[donor_email]", donor_email);
+    }
+    if (donor_phone) {
+      euplatescUrl.searchParams.append("ExtraData[donor_phone]", donor_phone);
+    }
 
     return new Response(
       JSON.stringify({
@@ -332,14 +351,25 @@ serve(async (req: Request) => {
       }),
       {
         status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json",
+        },
       }
     );
   } catch (error) {
     console.error("Error in create-payment:", error);
-    return new Response(JSON.stringify({ error: "Internal server error" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({
+        error: "Internal server error",
+      }),
+      {
+        status: 500,
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json",
+        },
+      }
+    );
   }
 });
