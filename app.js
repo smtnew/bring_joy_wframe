@@ -145,13 +145,23 @@ function renderChildren(children) {
   for (const [community, communityChildren] of Object.entries(grouped)) {
     const communityId = `community-${encodeURIComponent(community)}`;
     const childrenCount = communityChildren.length;
+    const sortedCommunityChildren = communityChildren
+      .slice()
+      .sort((a, b) => {
+        const aFinished = a.status === "finished";
+        const bFinished = b.status === "finished";
+        if (aFinished !== bFinished) {
+          return aFinished ? 1 : -1;
+        }
+        return a.nume.localeCompare(b.nume);
+      });
     html += `
             <div class="community-group" id="${communityId}">
                 <h2 class="community-title">${community} (${childrenCount} ${
       childrenCount === 1 ? "copil" : "copii"
     })</h2>
                 <div class="children-grid">
-                    ${communityChildren
+                    ${sortedCommunityChildren
                       .map((child) => renderChildCard(child))
                       .join("")}
                 </div>
@@ -552,9 +562,8 @@ function handleRealtimeUpdate(payload) {
     const index = allChildren.findIndex((c) => c.id === payload.new.id);
     if (index !== -1) {
       allChildren[index] = payload.new;
-
-      // Update the card in the DOM without full re-render
-      updateChildCard(payload.new);
+      // Re-render to maintain ordering within communities
+      renderChildren(allChildren);
     }
   } else if (payload.eventType === "INSERT") {
     // Add new child
