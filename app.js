@@ -27,6 +27,10 @@ const searchToggle = document.getElementById("searchToggle");
 const searchPanel = document.getElementById("searchPanel");
 const searchClose = document.getElementById("searchClose");
 const childrenContainer = document.getElementById("childrenContainer");
+const onlyAvailableToggle = document.getElementById("onlyAvailableToggle");
+const onlyAvailableToggleGlobal = document.getElementById(
+  "onlyAvailableToggleGlobal"
+);
 const letterModal = document.getElementById("letterModal");
 const modalChildName = document.getElementById("modalChildName");
 const modalLetterContent = document.getElementById("modalLetterContent");
@@ -109,7 +113,7 @@ async function loadChildren() {
     if (error) throw error;
 
     allChildren = data;
-    renderChildren(allChildren);
+    renderChildren(getFilteredChildren());
   } catch (error) {
     console.error("Error loading children:", error);
     childrenContainer.innerHTML = `
@@ -145,16 +149,14 @@ function renderChildren(children) {
   for (const [community, communityChildren] of Object.entries(grouped)) {
     const communityId = `community-${encodeURIComponent(community)}`;
     const childrenCount = communityChildren.length;
-    const sortedCommunityChildren = communityChildren
-      .slice()
-      .sort((a, b) => {
-        const aFinished = a.status === "finished";
-        const bFinished = b.status === "finished";
-        if (aFinished !== bFinished) {
-          return aFinished ? 1 : -1;
-        }
-        return a.nume.localeCompare(b.nume);
-      });
+    const sortedCommunityChildren = communityChildren.slice().sort((a, b) => {
+      const aFinished = a.status === "finished";
+      const bFinished = b.status === "finished";
+      if (aFinished !== bFinished) {
+        return aFinished ? 1 : -1;
+      }
+      return a.nume.localeCompare(b.nume);
+    });
     html += `
             <div class="community-group" id="${communityId}">
                 <h2 class="community-title">${community} (${childrenCount} ${
@@ -173,6 +175,35 @@ function renderChildren(children) {
 
   // Populate communities dropdown after rendering with current children
   populateCommunitiesDropdown(children);
+}
+
+// Compute filtered list based on search input and availability toggle
+function getOnlyAvailableState() {
+  const inPanel = !!onlyAvailableToggle && onlyAvailableToggle.checked;
+  const inGlobal =
+    !!onlyAvailableToggleGlobal && onlyAvailableToggleGlobal.checked;
+  return inPanel || inGlobal;
+}
+
+function getFilteredChildren() {
+  let filtered = allChildren.slice();
+
+  const query = (searchInput?.value || "").toLowerCase().trim();
+  if (query) {
+    filtered = filtered.filter((child) => {
+      return (
+        child.nume.toLowerCase().includes(query) ||
+        child.text_scurt.toLowerCase().includes(query) ||
+        child.comunitate.toLowerCase().includes(query)
+      );
+    });
+  }
+
+  if (getOnlyAvailableState()) {
+    filtered = filtered.filter((child) => child.status !== "finished");
+  }
+
+  return filtered;
 }
 
 // Populate communities dropdown
@@ -515,21 +546,13 @@ async function donate(childId) {
 // Search functionality
 function searchChildren(query) {
   const lowerQuery = query.toLowerCase().trim();
-
-  if (!lowerQuery) {
-    renderChildren(allChildren);
-    return;
+  // Ensure searchInput reflects current query when called programmatically
+  if (searchInput && searchInput.value !== query) {
+    searchInput.value = query;
   }
 
-  const filtered = allChildren.filter((child) => {
-    return (
-      child.nume.toLowerCase().includes(lowerQuery) ||
-      child.text_scurt.toLowerCase().includes(lowerQuery) ||
-      child.comunitate.toLowerCase().includes(lowerQuery)
-    );
-  });
-
-  renderChildren(filtered);
+  // Reuse combined filtering logic
+  renderChildren(getFilteredChildren());
 }
 
 // Setup Realtime subscription
@@ -562,17 +585,17 @@ function handleRealtimeUpdate(payload) {
     const index = allChildren.findIndex((c) => c.id === payload.new.id);
     if (index !== -1) {
       allChildren[index] = payload.new;
-      // Re-render to maintain ordering within communities
-      renderChildren(allChildren);
+      // Re-render with current filters to maintain ordering and filters
+      renderChildren(getFilteredChildren());
     }
   } else if (payload.eventType === "INSERT") {
     // Add new child
     allChildren.push(payload.new);
-    renderChildren(allChildren);
+    renderChildren(getFilteredChildren());
   } else if (payload.eventType === "DELETE") {
     // Remove child
     allChildren = allChildren.filter((c) => c.id !== payload.old.id);
-    renderChildren(allChildren);
+    renderChildren(getFilteredChildren());
   }
 }
 
@@ -626,6 +649,32 @@ function setupEventListeners() {
   if (searchInput) {
     searchInput.addEventListener("input", (e) => {
       searchChildren(e.target.value);
+    });
+  }
+
+  // Availability toggle
+  if (onlyAvailableToggle) {
+    onlyAvailableToggle.addEventListener("change", () => {
+      // keep both toggles in sync
+      if (
+        onlyAvailableToggleGlobal &&
+        onlyAvailableToggleGlobal.checked !== onlyAvailableToggle.checked
+      ) {
+        onlyAvailableToggleGlobal.checked = onlyAvailableToggle.checked;
+      }
+      renderChildren(getFilteredChildren());
+    });
+  }
+  if (onlyAvailableToggleGlobal) {
+    onlyAvailableToggleGlobal.addEventListener("change", () => {
+      // keep both toggles in sync
+      if (
+        onlyAvailableToggle &&
+        onlyAvailableToggle.checked !== onlyAvailableToggleGlobal.checked
+      ) {
+        onlyAvailableToggle.checked = onlyAvailableToggleGlobal.checked;
+      }
+      renderChildren(getFilteredChildren());
     });
   }
 

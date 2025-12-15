@@ -237,6 +237,7 @@ nav > a:hover {
   display: flex;
   align-items: flex-start;
   justify-content: flex-end;
+  gap: 0.75rem;
 }
 
 .search-toggle {
@@ -323,6 +324,33 @@ nav > a:hover {
   color: var(--color-gray);
 }
 
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.filter-row label {
+  font-size: 0.9rem;
+  color: var(--color-gray);
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Inline filter chip in hero */
+.filter-row-inline {
+  margin-top: 0; /* inline variant has no extra top spacing */
+  background: var(--color-white);
+  border: 2px solid var(--color-beige);
+  border-radius: 999px;
+  padding: 0.4rem 0.75rem;
+}
+
+.filter-row-inline label {
+  color: var(--color-dark);
+}
+
 .search-close {
   position: absolute;
   top: 0.65rem;
@@ -368,6 +396,10 @@ nav > a:hover {
   .search-toggle {
     width: 100%;
     text-align: left;
+  }
+
+  .filter-row-inline {
+    width: 100%;
   }
 
   .search-panel {
