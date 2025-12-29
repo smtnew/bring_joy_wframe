@@ -1,3 +1,14 @@
+// Wrap everything in an IIFE to prevent duplicate declarations
+(function() {
+  'use strict';
+  
+  // Prevent duplicate initialization
+  if (window.__bringJoyApp) {
+    console.warn("App already initialized");
+    return;
+  }
+  window.__bringJoyApp = true;
+
 let SUPABASE_URL = "";
 let SUPABASE_ANON_KEY = "";
 let supabase;
@@ -72,6 +83,13 @@ function closeSearchPanel() {
 
 // Initialize app
 async function init() {
+  // Prevent double initialization
+  if (window.__bringJoyInitialized) {
+    console.warn("App already initialized");
+    return;
+  }
+  window.__bringJoyInitialized = true;
+
   try {
     const config = await loadConfig();
     SUPABASE_URL = config.supabase?.url || "";
@@ -792,3 +810,5 @@ if (document.readyState === "loading") {
 } else {
   init();
 }
+
+})(); // End of IIFE
